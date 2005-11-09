@@ -1,0 +1,6 @@
+This file lists the portability status of this client.  Please send me any
+additional information (greg@meetup.com).
+
+The newest release has only been tested on:
+
+Microsoft .NET Framework 1.1 SP1
