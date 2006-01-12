@@ -1109,7 +1109,7 @@ namespace MemCached.clientlib
 			{
 				thread = new Thread(new ThreadStart(Maintain));
 				this.pool = pool;
-				thread.IsBackground = true;
+				thread.Priority = ThreadPriority.Lowest;
 			}
 
 			public long Interval
@@ -1151,7 +1151,6 @@ namespace MemCached.clientlib
 					}
 					catch ( Exception ex ) 
 					{
-						Thread.Sleep(new TimeSpan( interval * 10 ) );
 						log.Error("maintenance thread choked.", ex);
 					}
 				}
@@ -1184,8 +1183,8 @@ namespace MemCached.clientlib
 			// data
 			private String host;
 			private Socket sock;
-			private NetworkStream inStream;
-			private NetworkStream outStream;
+			private Stream inStream;
+			private Stream outStream;
 
 			/// <summary>
 			/// creates a new SockIO object wrapping a socket
@@ -1199,7 +1198,6 @@ namespace MemCached.clientlib
 			/// <param name="noDelay">TCP NODELAY option?</param>
 			public SockIO( SockIOPool pool, String host, int port, int timeout, int connectTimeout, bool noDelay )  
 			{
-
 				this.pool = pool;
 
 				if(connectTimeout > 0)
@@ -1220,7 +1218,8 @@ namespace MemCached.clientlib
 				sock.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, noDelay ? 1 : 0);
 
 				NetworkStream netStream = new NetworkStream(sock);
-				inStream  = outStream = netStream;
+				inStream = new BufferedStream(netStream);
+				outStream = new BufferedStream(netStream);
 
 				this.host = host + ":" + port;
 			}
@@ -1259,7 +1258,8 @@ namespace MemCached.clientlib
 				sock.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, noDelay ? 1 : 0);
 
 				NetworkStream netStream = new NetworkStream(sock);
-				inStream  = outStream = netStream;
+				inStream = new BufferedStream(netStream);
+				outStream = new BufferedStream(netStream);
 
 				this.host = host;
 			}
