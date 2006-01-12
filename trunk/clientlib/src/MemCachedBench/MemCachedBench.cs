@@ -41,6 +41,7 @@ namespace MemCached.MemCachedBench
 	using System.Collections;
 
 	using MemCached.clientlib;
+	//using red5.memcached;
 
 	public class MemCachedBench 
 	{
@@ -61,7 +62,7 @@ namespace MemCached.MemCachedBench
 				start = int.Parse(args[1]);
 			}
 
-			string[] serverlist = { "140.192.34.36:11211", "140.192.34.23:11211" };
+			string[] serverlist = { "140.192.34.72:11211", "140.192.34.73:11211" };
 
 			// initialize the pool for memcache servers
 			SockIOPool pool = SockIOPool.getInstance();
@@ -82,9 +83,28 @@ namespace MemCached.MemCachedBench
 			pool.Nagle = false;
 			pool.initialize();
 
-			// get client instance
+			// initialize the pool for memcache servers
+//			SockIOPool pool = SockIOPool.Instance;
+//			pool.Servers = serverlist;
+//
+//			pool.InitConn = 5;
+//			pool.MinConn = 5;
+//			pool.MaxConn = 50;
+//			pool.MaintSleep = 30;
+//			pool.SocketTO = 1000;
+//
+//			pool.Nagle = false;
+//			pool.Initialize();
+
+//
+//			// get client instance
 			MemCachedClient mc = new MemCachedClient();
 			mc.EnableCompression = false;
+
+//			MemCachedClient mc = new MemCachedClient();
+//			mc.CompressEnable = false;
+//			mc.CompressThreshold = 0;
+//			mc.Serialize = true;
 
 			string keyBase = "testKey";
 			string obj = "This is a test of an object blah blah es, serialization does not seem to slow things down so much.  The gzip compression is horrible horrible performance, so we only use it for very large objects.  I have not done any heavy benchmarking recently";
@@ -117,19 +137,21 @@ namespace MemCached.MemCachedBench
 			Console.WriteLine("Cache hits: " + hits.ToString());
 			Console.WriteLine("Cache misses: " + misses.ToString());
 
-			Hashtable stats = mc.Stats();
+			IDictionary stats = mc.Stats();
 			foreach(string key1 in stats.Keys)
 			{
 				Console.WriteLine(key1);
 				Hashtable values = (Hashtable)stats[key1];
 				foreach(string key2 in values.Keys)
 				{
-					Console.WriteLine(values[key2]);
+					Console.WriteLine(key2 + ":" + values[key2]);
 				}
 				Console.WriteLine();
 			}
 
 			SockIOPool.getInstance().shutDown();
+
+			//SockIOPool.Instance.ShutDown();
 		}
 	}
 }

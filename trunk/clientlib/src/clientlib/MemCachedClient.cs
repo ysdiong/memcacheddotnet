@@ -672,7 +672,7 @@ namespace MemCached.clientlib
 
 				try 
 				{
-					MemoryStream memoryStream = new MemoryStream(val.Length);
+					MemoryStream memoryStream = new MemoryStream();
 					GZipOutputStream gos = new GZipOutputStream( memoryStream );
 					gos.Write( val, 0, val.Length );
 					gos.Finish();
@@ -1273,19 +1273,18 @@ namespace MemCached.clientlib
 							// read the input stream, and write to a byte array output stream since
 							// we have to read into a byte array, but we don't know how large it
 							// will need to be, and we don't want to resize it a bunch
-							MemoryStream compressed = new MemoryStream(buf);
-							MemoryStream decompressed = new MemoryStream(buf.Length);
-							GZipInputStream gzi = new GZipInputStream(compressed);
-						
+							GZipInputStream gzi = new GZipInputStream(new MemoryStream(buf));
+							MemoryStream bos = new MemoryStream(buf.Length);
+							
 							int count;
 							byte[] tmp = new byte[2048];
-							while ((count = gzi.Read(tmp, 0, 2048)) != -1) 
+							while ((count = gzi.Read(tmp, 0, tmp.Length)) > 0)
 							{
-								decompressed.Write(tmp, 0, count);
+								bos.Write(tmp, 0, count);
 							}
-
+							
 							// store uncompressed back to buffer
-							buf = decompressed.GetBuffer();
+							buf = bos.ToArray();
 							gzi.Close();
 						}
 						catch (IOException e) 

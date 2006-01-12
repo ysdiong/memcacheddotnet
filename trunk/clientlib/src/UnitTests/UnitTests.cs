@@ -170,7 +170,7 @@ namespace MemCached.UnitTests
 		public static void Main(string[] args) 
 		{
 
-			String[] serverlist = { "140.192.34.33:11211", "140.192.34.29:11211"  };
+			String[] serverlist = { "140.192.34.72:11211", "140.192.34.73:11211"  };
 
 			// initialize the pool for memcache servers
 			SockIOPool pool = SockIOPool.getInstance( "test" );
