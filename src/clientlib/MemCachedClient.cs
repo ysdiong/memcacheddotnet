@@ -605,20 +605,27 @@ namespace MemCached.clientlib
 			
 				if ( asString ) 
 				{
-					// useful for sharing data between java and non-java
-					// and also for storing ints for the increment method
-					log.Info( "++++ storing data as a string for key: " + key + " for class: " + obj.GetType().Name );
-					try 
-					{
-						val = UTF8Encoding.UTF8.GetBytes(obj.ToString());
-					}
-					catch ( Exception ) 
-					{
-						log.Error( "invalid encoding type used: " + defaultEncoding );
-						sock.Close();
-						sock = null;
-						return false;
-					}
+                    if (obj != null)
+                    {
+                        // useful for sharing data between java and non-java
+                        // and also for storing ints for the increment method
+                        log.Info("++++ storing data as a string for key: " + key + " for class: " + obj.GetType().Name);
+                        try
+                        {
+                            val = UTF8Encoding.UTF8.GetBytes(obj.ToString());
+                        }
+                        catch (Exception)
+                        {
+                            log.Error("invalid encoding type used: " + defaultEncoding);
+                            sock.Close();
+                            sock = null;
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        val = new byte[0];
+                    }
 				}
 				else 
 				{
@@ -640,27 +647,34 @@ namespace MemCached.clientlib
 			}
 			else 
 			{
-				// always serialize for non-primitive types
-				log.Info( "++++ serializing for key: " + key + " for class: " + obj.GetType().Name );
-				try 
-				{
-					MemoryStream memStream = new MemoryStream();
-					new BinaryFormatter().Serialize(memStream, obj);
-					val = memStream.GetBuffer();
-					flags |= F_SERIALIZED;
-				}
-				catch ( IOException e ) 
-				{
-					// if we fail to serialize, then
-					// we bail
-					log.Error( "failed to serialize obj", e );
-					log.Error( obj.ToString() );
+                if (obj != null)
+                {
+                    // always serialize for non-primitive types
+                    log.Info("++++ serializing for key: " + key + " for class: " + obj.GetType().Name);
+                    try
+                    {
+                        MemoryStream memStream = new MemoryStream();
+                        new BinaryFormatter().Serialize(memStream, obj);
+                        val = memStream.GetBuffer();
+                        flags |= F_SERIALIZED;
+                    }
+                    catch (IOException e)
+                    {
+                        // if we fail to serialize, then
+                        // we bail
+                        log.Error("failed to serialize obj", e);
+                        log.Error(obj.ToString());
 
-					// return socket to pool and bail
-					sock.Close();
-					sock = null;
-					return false;
-				}
+                        // return socket to pool and bail
+                        sock.Close();
+                        sock = null;
+                        return false;
+                    }
+                }
+                else
+                {
+                    val = new byte[0];
+                }
 			}
 		
 			// now try to compress if we want to
