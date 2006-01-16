@@ -136,7 +136,7 @@ namespace MemCached.clientlib
 		private int maxConn						= 10;
 		private long maxIdle					= 1000 * 60 * 3;		// max idle time for avail sockets
 		private long maxBusyTime				= 1000 * 60 * 5;		// max idle time for avail sockets
-		private long maintSleep					= 1000 * 5;			// maintenance thread sleep time
+		private long maintSleep					= 1000 * 5; 			// maintenance thread sleep time
 		private int socketTO					= 1000 * 10;			// default timeout of socket reads
 		private int socketConnectTO			    = 0;			        // default timeout of socket connections
 		private bool failover			    = true;				// default to failover in event of cache server dead
@@ -1109,7 +1109,6 @@ namespace MemCached.clientlib
 			{
 				thread = new Thread(new ThreadStart(Maintain));
 				this.pool = pool;
-				thread.Priority = ThreadPriority.Lowest;
 			}
 
 			public long Interval
@@ -1141,7 +1140,7 @@ namespace MemCached.clientlib
 				{
 					try 
 					{
-						Thread.Sleep(new TimeSpan( interval ) );
+						Thread.Sleep( (int)interval );
 
 						// if pool is initialized, then
 						// run the maintenance method on itself
