@@ -134,9 +134,9 @@ namespace MemCached.clientlib
 		private int initConn					= 3;
 		private int minConn						= 3;
 		private int maxConn						= 10;
-		private long maxIdle					= 1000 * 60 * 3;		// max idle time for avail sockets
-		private long maxBusyTime				= 1000 * 60 * 5;		// max idle time for avail sockets
-		private long maintSleep					= 1000 * 5; 			// maintenance thread sleep time
+		private long maxIdle					= 1000 * 60 * 3;		// max idle time for avail sockets (in milliseconds)
+		private long maxBusyTime				= 1000 * 60 * 5;		// max idle time for avail sockets (in milliseconds)
+		private long maintSleep					= 1000 * 5;			// maintenance thread sleep time (in milliseconds)
 		private int socketTO					= 1000 * 10;			// default timeout of socket reads
 		private int socketConnectTO			    = 0;			        // default timeout of socket connections
 		private bool failover			    = true;				// default to failover in event of cache server dead
@@ -778,13 +778,14 @@ namespace MemCached.clientlib
 				sockets = (Hashtable)pool[ host ];
 				if ( sockets != null ) 
 				{
-					sockets[ socket ] = new TimeSpan(DateTime.Now.Ticks).TotalMilliseconds;
+					sockets[ socket ] = DateTime.Now; //MaxM 1.16.05: Use current DateTime to indicate socker creation time rather than milliseconds since 1970
+						
 					return;
 				}
 			}
 
 			sockets = new Hashtable();
-			sockets[ socket ] = new TimeSpan(DateTime.Now.Ticks).TotalMilliseconds;
+			sockets[ socket ] = DateTime.Now; //MaxM 1.16.05: Use current DateTime to indicate socker creation time rather than milliseconds since 1970
 			pool[ host ] = sockets ;
 		}
 
@@ -1027,12 +1028,12 @@ namespace MemCached.clientlib
 							break;
 
 						// remove stale entries
-						long expire   = (long)sockets[ socket ];
+						DateTime expire   = (DateTime) sockets[ socket ]; 
 
 						// if past idle time
 						// then close socket
 						// and remove from pool
-						if ( (expire + maxIdle) < new TimeSpan(DateTime.Now.Ticks).TotalMilliseconds ) 
+						if ( (expire.AddMilliseconds( maxIdle) ) < DateTime.Now ) 
 						{
 							log.Debug( "+++ removing stale entry from pool as it is past its idle timeout and pool is over max spare" );
 							try 
@@ -1066,14 +1067,14 @@ namespace MemCached.clientlib
 				foreach (SockIO socket in new IterIsolate(sockets.Keys) ) 
 				{
 					// remove stale entries
-					long hungTime = (long)sockets[ socket ];
+					DateTime hungTime = (DateTime) sockets[ socket ];
 
 					// if past max busy time
 					// then close socket
 					// and remove from pool
-					if ( (hungTime + maxBusyTime) < new TimeSpan(DateTime.Now.Ticks).TotalMilliseconds ) 
+					if ( (hungTime.AddMilliseconds( maxBusyTime )) < DateTime.Now ) 
 					{
-						log.Error( "+++ removing potentially hung connection from busy pool ... socket in pool for " + (new TimeSpan(DateTime.Now.Ticks).TotalMilliseconds - hungTime) + "ms" );
+						log.Error( "+++ removing potentially hung connection from busy pool ... socket in pool for " + (new TimeSpan(DateTime.Now.Ticks - hungTime.Ticks).TotalMilliseconds) + "ms" );
 						try 
 						{
 							socket.TrueClose();
@@ -1148,6 +1149,7 @@ namespace MemCached.clientlib
 							pool.selfMaint();
 
 					}
+					catch( ThreadInterruptedException ){} //MaxM: When SockIOPool.getInstance().shutDown() is called, this exception will be raised and can be safely ignored.
 					catch ( Exception ex ) 
 					{
 						log.Error("maintenance thread choked.", ex);
