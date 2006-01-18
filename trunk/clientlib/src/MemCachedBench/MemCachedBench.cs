@@ -41,7 +41,6 @@ namespace MemCached.MemCachedBench
 	using System.Collections;
 
 	using MemCached.clientlib;
-	//using red5.memcached;
 
 	public class MemCachedBench 
 	{
