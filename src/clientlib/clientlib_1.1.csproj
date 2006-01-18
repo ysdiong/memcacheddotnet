@@ -124,6 +124,11 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MemCachedConfigSection.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "NativeHandler.cs"
                     SubType = "Code"
                     BuildAction = "Compile"

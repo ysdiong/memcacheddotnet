@@ -896,7 +896,7 @@ namespace MemCached.clientlib
 			{
 				Hashtable sockets = (Hashtable)pool[ host ];
 
-				foreach (SockIO socket in sockets.Keys ) 
+				foreach (SockIO socket in new IterIsolate(sockets.Keys) ) 
 				{
 					try 
 					{
@@ -1547,16 +1547,6 @@ namespace MemCached.clientlib
 					throw new IOException("++++ attempting to write to closed socket");
 				}
 				outStream.Write(b, 0, b.Length);
-			}
-
-			/// <summary>
-			/// use the sockets hashcode for this object
-			/// so we can key off of SockIOs 
-			/// </summary>
-			/// <returns>hashcode</returns>
-			public override int GetHashCode() 
-			{
-				return (sock == null) ? 0 : sock.GetHashCode();
 			}
 
 			/// <summary>
