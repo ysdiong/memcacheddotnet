@@ -1,2 +1,26 @@
+(TG) Tim Gebhardt
+(MM) Maxim Mass
+
 02 Nov 2005 (TG)
    -Start of project
+
+12 Jan 2006 (TG)
+   -Created two different project/solution sets, one for VS.NET 2003/.NET 1.1
+	    and one for VS.NET 2005/.NET 2.0.
+
+16 Jan 2006 (TG)
+   -Fixed a bug where trying to add a 'null' object to the cache would throw
+	  an exception.
+
+17 Jan 2006 (MM)
+   -Fixed the bug where an exception would be thrown and not taken care of
+	  when a socket pool thread would terminate.
+   -Cleaned up the time comparison stuff in the socket pool.
+
+18 Jan 2006 (TG)
+   -Enabled log4net to work on the client library and in the MemCachedBench
+	    program.
+   -Removed the overridden GetHashCode function in SockIO, which was a carry
+	    over from the java port, because it was causing problems and 
+	    shouldn't be necessary.
+   -Fixed a bug where a connection pool could not be closed cleanly.
