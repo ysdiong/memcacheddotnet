@@ -1566,7 +1566,7 @@ namespace Memcached.ClientLibrary
 			return statsMaps;
 		}
 
-		private static ResourceManager _resourceManager = new ResourceManager("StringMessages", typeof(MemcachedClient).Assembly);
+		private static ResourceManager _resourceManager = new ResourceManager("Memcached.ClientLibrary.StringMessages", typeof(MemcachedClient).Assembly);
 		private static string GetLocalizedString(string key)
 		{
 			return _resourceManager.GetString(key);

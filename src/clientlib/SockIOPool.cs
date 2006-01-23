@@ -1247,7 +1247,7 @@ namespace Memcached.ClientLibrary
             }
         }
 
-		private static ResourceManager _resourceManager = new ResourceManager("StringMessages", typeof(SockIOPool).Assembly);
+		private static ResourceManager _resourceManager = new ResourceManager("Memcached.ClientLibrary.StringMessages", typeof(SockIOPool).Assembly);
 		private static string GetLocalizedString(string key)
 		{
 			return _resourceManager.GetString(key);
