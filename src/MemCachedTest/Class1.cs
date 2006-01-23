@@ -1,6 +1,6 @@
 using System;
 
-namespace MemCachedTest
+namespace MemcachedTest
 {
 	/// <summary>
 	/// Summary description for Class1.

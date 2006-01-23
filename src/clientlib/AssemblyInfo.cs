@@ -2,6 +2,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using log4net;
+using System.Runtime.InteropServices;
+using System;
 
 //
 // General Information about an assembly is controlled through the following 
@@ -59,5 +61,8 @@ using log4net;
 [assembly: AssemblyDelaySign(false)]
 [assembly: AssemblyKeyFile("")]
 [assembly: AssemblyKeyName("")]
+
+[assembly: ComVisible(false)]
+[assembly: CLSCompliant(true)]
 
 [assembly: log4net.Config.XmlConfigurator(Watch = true)]

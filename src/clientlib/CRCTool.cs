@@ -1,6 +1,6 @@
 using System;
 
-namespace Communication.IO.Tools
+namespace Memcached.ClientLibrary
 {
 	/// <summary>
 	/// Tool to calculate and add CRC codes to a string
@@ -59,7 +59,7 @@ namespace Communication.IO.Tools
 
         public void Init(CRCCode CodingType)
         {
-            switch( CodingType )
+            switch(CodingType)
             {
                 case CRCCode.CRC_CCITT:
                     order = 16; direct=1; polynom=0x1021; crcinit = 0xFFFF; crcxor=0; refin =0; refout=0;
@@ -83,7 +83,7 @@ namespace Communication.IO.Tools
 
             ulong bit, crc;
             int i;
-            if ( direct == 0 ) 
+            if (direct == 0) 
             {
                 crcinit_nondirect = crcinit;
                 crc = crcinit;
@@ -91,7 +91,7 @@ namespace Communication.IO.Tools
                 {
                     bit = crc & crchighbit;
                     crc<<= 1;
-                    if ( bit != 0 ) 
+                    if (bit != 0) 
                     {
                         crc^= polynom;
                     }
@@ -126,30 +126,31 @@ namespace Communication.IO.Tools
         /// you should use the table functions. Since they use precalculated values, which 
         /// saves some calculating.
         /// </summary>.
+        [CLSCompliant(false)]
         public ulong crctablefast (byte[] p) 
         {
             // fast lookup table algorithm without augmented zero bytes, e.g. used in pkzip.
             // only usable with polynom orders of 8, 16, 24 or 32.
             ulong crc = crcinit_direct;
-            if ( refin != 0 )
+            if (refin != 0)
             {
                 crc = reflect(crc, order);
             }
-            if ( refin == 0 ) 
+            if (refin == 0) 
             {
-                for ( int i = 0; i < p.Length; i++ )
+                for (int i = 0; i < p.Length; i++)
                 {
                     crc = (crc << 8) ^ crctab[ ((crc >> (order-8)) & 0xff) ^ p[i]];
                 }
             }
             else 
             {
-                for ( int i = 0; i < p.Length; i++ )
+                for (int i = 0; i < p.Length; i++)
                 {
                     crc = (crc >> 8) ^ crctab[ (crc & 0xff) ^ p[i]];
                 }
             }
-            if ( (refout^refin) != 0 ) 
+            if ((refout^refin) != 0) 
             {
                 crc = reflect(crc, order);
             }
@@ -158,45 +159,46 @@ namespace Communication.IO.Tools
             return(crc);
         }
 
+		[CLSCompliant(false)]
         public ulong crctable (byte[] p) 
         {
             // normal lookup table algorithm with augmented zero bytes.
             // only usable with polynom orders of 8, 16, 24 or 32.
             ulong crc = crcinit_nondirect;
-            if ( refin != 0 ) 
+            if (refin != 0) 
             {
                 crc = reflect(crc, order);
             }
-            if ( refin == 0 ) 
+            if (refin == 0) 
             {
-                for ( int i = 0; i < p.Length; i++ )
+                for (int i = 0; i < p.Length; i++)
                 {
                     crc = ((crc << 8) | p[i]) ^ crctab[ (crc >> (order-8)) & 0xff ];
                 }
             }
             else 
             {
-                for ( int i = 0; i < p.Length; i++ )
+                for (int i = 0; i < p.Length; i++)
                 {
-                    crc = (ulong)(( (int)(crc >> 8) | (p[i] << (order-8))) ^ (int)crctab[ crc & 0xff ]);
+                    crc = (ulong)(((int)(crc >> 8) | (p[i] << (order-8))) ^ (int)crctab[ crc & 0xff ]);
                 }
             }
-            if ( refin == 0 ) 
+            if (refin == 0) 
             {
-                for ( int i = 0; i < order/8; i++ )
+                for (int i = 0; i < order/8; i++)
                 {
                     crc = (crc << 8) ^ crctab[ (crc >> (order-8))  & 0xff];
                 } 
             }
             else 
             {
-                for ( int i = 0; i < order/8; i++ )
+                for (int i = 0; i < order/8; i++)
                 {
                     crc = (crc >> 8) ^ crctab[crc & 0xff];
                 } 
             }
 
-            if ( (refout^refin) != 0 ) 
+            if ((refout^refin) != 0) 
             {
                 crc = reflect(crc, order);
             }
@@ -206,6 +208,7 @@ namespace Communication.IO.Tools
             return(crc);
         }
 
+		[CLSCompliant(false)]
         public ulong crcbitbybit(byte[] p) 
         {
             // bit by bit algorithm with augmented zero bytes.
@@ -217,7 +220,7 @@ namespace Communication.IO.Tools
             for (i=0; i<p.Length; i++) 
             {
                 c = (ulong)p[i];
-                if ( refin != 0 ) 
+                if (refin != 0) 
                 {
                     c = reflect(c, 8);
                 }
@@ -226,26 +229,26 @@ namespace Communication.IO.Tools
                 {
                     bit = crc & crchighbit;
                     crc<<= 1;
-                    if ( (c & j) != 0) 
+                    if ((c & j) != 0) 
                     {
                         crc|= 1;
                     }
-                    if ( bit  != 0 ) 
+                    if (bit  != 0) 
                     {
                         crc^= polynom;
                     }
                 }
             }	
 
-            for ( i=0; (int)i < order; i++) 
+            for (i=0; (int)i < order; i++) 
             {
 
                 bit = crc & crchighbit;
                 crc<<= 1;
-                if ( bit != 0 ) crc^= polynom;
+                if (bit != 0) crc^= polynom;
             }
 
-            if ( refout != 0 ) 
+            if (refout != 0) 
             {
                 crc=reflect(crc, order);
             }
@@ -255,6 +258,7 @@ namespace Communication.IO.Tools
             return(crc);
         }
 
+		[CLSCompliant(false)]
         public ulong crcbitbybitfast(byte[] p) 
         {
             // fast bit by bit algorithm without augmented zero bytes.
@@ -266,23 +270,23 @@ namespace Communication.IO.Tools
             for (i = 0; i < p.Length; i++) 
             {
                 c = (ulong)p[i];
-                if ( refin != 0) 
+                if (refin != 0) 
                 {
                     c = reflect(c, 8);
                 }
 
-                for ( j = 0x80; j > 0; j >>= 1 ) 
+                for (j = 0x80; j > 0; j >>= 1) 
                 {
                     bit = crc & crchighbit;
                     crc <<= 1;
-                    if ( (c & j) > 0 ) bit^= crchighbit;
-                    if ( bit > 0 ) crc^= polynom;
+                    if ((c & j) > 0) bit^= crchighbit;
+                    if (bit > 0) crc^= polynom;
                 }
             }	
 
-            if ( refout > 0) 
+            if (refout > 0) 
             {
-                crc=reflect( crc, order );
+                crc=reflect(crc, order);
             }
             crc^= crcxor;
             crc&= crcmask;
@@ -296,6 +300,7 @@ namespace Communication.IO.Tools
         /// It is included to demonstrate that although it looks different it is the same 
         /// routine as the crcbitbybit* functions. But it is optimized and preconfigured for CRCITT.
         /// </summary>
+        [CLSCompliant(false)]
         public ushort CalcCRCITT(byte[] p)
         {
             uint uiCRCITTSum = 0xFFFF;
@@ -303,12 +308,12 @@ namespace Communication.IO.Tools
 
             for (int iBufferIndex = 0; iBufferIndex < p.Length; iBufferIndex++)
             {
-                uiByteValue = ( (uint) p[iBufferIndex] << 8);
-                for ( int iBitIndex = 0; iBitIndex < 8; iBitIndex++ )
+                uiByteValue = ((uint) p[iBufferIndex] << 8);
+                for (int iBitIndex = 0; iBitIndex < 8; iBitIndex++)
                 {
-                    if ( ( (uiCRCITTSum^uiByteValue) & 0x8000) != 0 )
+                    if (((uiCRCITTSum^uiByteValue) & 0x8000) != 0)
                     {
-                        uiCRCITTSum = (uiCRCITTSum <<1 ) ^ 0x1021;
+                        uiCRCITTSum = (uiCRCITTSum <<1) ^ 0x1021;
                     }
                     else
                     {
@@ -329,9 +334,9 @@ namespace Communication.IO.Tools
 
             ulong i, j=1, crcout = 0;
 
-            for ( i = (ulong)1 <<(bitnum-1); i != 0; i>>=1) 
+            for (i = (ulong)1 <<(bitnum-1); i != 0; i>>=1) 
             {
-                if ( ( crc & i ) != 0 ) 
+                if ((crc & i) != 0) 
                 {
                     crcout |= j;
                 }
@@ -351,7 +356,7 @@ namespace Communication.IO.Tools
             for (i=0; i<256; i++) 
             {
                 crc=(ulong)i;
-                if ( refin !=0 ) 
+                if (refin !=0) 
                 {
                     crc=reflect(crc, 8);
                 }
@@ -361,7 +366,7 @@ namespace Communication.IO.Tools
                 {
                     bit = crc & crchighbit;
                     crc<<= 1;
-                    if ( bit !=0 ) crc^= polynom;
+                    if (bit !=0) crc^= polynom;
                 }			
 
                 if (refin != 0) 

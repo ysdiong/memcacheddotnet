@@ -9,7 +9,7 @@
             <Settings
                 ApplicationIcon = "App.ico"
                 AssemblyKeyContainerName = ""
-                AssemblyName = "MemCachedTest"
+                AssemblyName = "MemcachedTest"
                 AssemblyOriginatorKeyFile = ""
                 DefaultClientScript = "JScript"
                 DefaultHTMLPageLayout = "Grid"
@@ -18,7 +18,7 @@
                 OutputType = "Exe"
                 PreBuildEvent = ""
                 PostBuildEvent = ""
-                RootNamespace = "MemCachedTest"
+                RootNamespace = "Memcached.MemcachedTest"
                 RunPostBuildEvent = "OnBuildSuccess"
                 StartupObject = ""
             >

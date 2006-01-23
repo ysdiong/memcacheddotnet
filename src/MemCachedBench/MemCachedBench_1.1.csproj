@@ -9,7 +9,7 @@
             <Settings
                 ApplicationIcon = "App.ico"
                 AssemblyKeyContainerName = ""
-                AssemblyName = "MemCachedBench"
+                AssemblyName = "MemcachedBench"
                 AssemblyOriginatorKeyFile = ""
                 DefaultClientScript = "JScript"
                 DefaultHTMLPageLayout = "Grid"
@@ -18,9 +18,9 @@
                 OutputType = "Exe"
                 PreBuildEvent = ""
                 PostBuildEvent = ""
-                RootNamespace = "MemCachedBench"
+                RootNamespace = "Memcached.MemcachedBench"
                 RunPostBuildEvent = "OnBuildSuccess"
-                StartupObject = "MemCached.MemCachedBench.MemCachedBench"
+                StartupObject = "Memcached.MemcachedBench.MemcachedBench"
             >
                 <Config
                     Name = "Debug"

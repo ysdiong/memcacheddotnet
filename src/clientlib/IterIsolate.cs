@@ -8,65 +8,65 @@
 using System;
 using System.Collections;
 
-namespace MemCached.clientlib
+namespace Memcached.ClientLibrary
 {
 	/// <summary>
 	/// Gives us a handy way to modify a collection while we're iterating through it.
 	/// </summary>
-	public class IterIsolate: IEnumerable
+	public class IteratorIsolateCollection: IEnumerable
 	{
-		internal class IterIsolateEnumerator: IEnumerator
+        IEnumerable _enumerable;
+
+		public IteratorIsolateCollection(IEnumerable enumerable)
 		{
-			ArrayList items = new ArrayList();
-			int currentItem;
-
-			internal IterIsolateEnumerator(IEnumerator enumerator)
-			{
-				while (enumerator.MoveNext() != false)
-				{
-					items.Add(enumerator.Current);
-				}
-				IDisposable disposable = enumerator as IDisposable;
-				if (disposable != null)
-				{
-					disposable.Dispose();
-				}
-				currentItem = -1;
-			}
-
-			public void Reset()
-			{
-				currentItem = -1;
-			}
-
-			public bool MoveNext()
-			{
-				currentItem++;
-				if (currentItem == items.Count)
-					return false;
-
-				return true;
-			}
-
-			public object Current
-			{
-				get
-				{
-					return items[currentItem];
-				}
-			}
-		}
-
-		public IterIsolate(IEnumerable enumerable)
-		{
-			this.enumerable = enumerable;
+			_enumerable = enumerable;
 		}
 
 		public IEnumerator GetEnumerator()
 		{
-			return new IterIsolateEnumerator(enumerable.GetEnumerator());
+			return new IteratorIsolateEnumerator(_enumerable.GetEnumerator());
 		}
 
-		IEnumerable enumerable;
+        internal class IteratorIsolateEnumerator : IEnumerator
+        {
+            ArrayList items = new ArrayList();
+            int currentItem;
+
+            internal IteratorIsolateEnumerator(IEnumerator enumerator)
+            {
+                while (enumerator.MoveNext() != false)
+                {
+                    items.Add(enumerator.Current);
+                }
+                IDisposable disposable = enumerator as IDisposable;
+                if (disposable != null)
+                {
+                    disposable.Dispose();
+                }
+                currentItem = -1;
+            }
+
+            public void Reset()
+            {
+                currentItem = -1;
+            }
+
+            public bool MoveNext()
+            {
+                currentItem++;
+                if (currentItem == items.Count)
+                    return false;
+
+                return true;
+            }
+
+            public object Current
+            {
+                get
+                {
+                    return items[currentItem];
+                }
+            }
+        }
 	}
 }

@@ -1,5 +1,7 @@
 To Do:
 
 - clean up and add more unit tests
-- Try different compression streams as gzip stream is slow. (JNI??)
-- Try to improve CRC32 hashing performance (java.zip.CRC32 is slooooow)
+- Add a configuration handler so we can set the client library
+	properties in the App/Web.config file.
+- Really stress test and robust test server failover.
+- Bug fix (always :) ).

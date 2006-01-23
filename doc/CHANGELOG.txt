@@ -24,3 +24,15 @@
 	    over from the java port, because it was causing problems and 
 	    shouldn't be necessary.
    -Fixed a bug where a connection pool could not be closed cleanly.
+   
+23 Jan 2006 (TG)
+   -Huge overhaul of code.  Basically ran the client library through FxCop
+    	    (http://www.gotdotnet.com/team/fxcop/) and tried to fix every
+    	    error.  There are breaking changes, but this should be the
+    	    one and only time this ever happens.
+   -Internationalized the exception messages and log messages.
+   -Added 2 FxCop projects (one for .NET 1.1 and one for .NET 2.0) and a
+   	    custom dictionary file to add our custom words for FxCop.
+   -Removed the NestedIOException class because the .NET IOException class
+            can do inner exceptions.
+   -Split off SockIO class into it's own source file.
