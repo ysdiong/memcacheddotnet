@@ -1,11 +1,11 @@
 /**
-/// MemCached C# client
+/// Memcached C# client
 /// Copyright (c) 2005
 ///
 /// This module is Copyright (c) 2005 Tim Gebhardt
 /// All rights reserved.
 /// Based on code written by Greg Whalin and Richard Russo
-/// for a Java MemCached client which can be found here:
+/// for a Java Memcached client which can be found here:
 /// http://www.whalin.com/memcached/
 ///
 /// This library is free software; you can redistribute it and/or
@@ -27,11 +27,13 @@
 /// @author Tim Gebhardt <tim@gebhardtcomputing.com>
 /// @version 1.0
 **/
-namespace MemCached.clientlib
+namespace Memcached.ClientLibrary
 {
 	using System;
 	using System.Collections;
+	using System.Globalization;
 	using System.IO;
+	using System.Resources;
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Formatters.Binary;
 	using System.Text;
@@ -39,6 +41,7 @@ namespace MemCached.clientlib
 
 	using log4net;
 	using ICSharpCode.SharpZipLib.GZip;
+    using Memcached.ClientLibrary;
 
 	/// <summary>
 	/// This is a C# client for the memcached server available from
@@ -54,7 +57,7 @@ namespace MemCached.clientlib
 	/// </summary>
 	/// <example>
 	/// //***To create cache client object and set params:***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// 
 	/// // compression is enabled by default	
 	/// mc.setCompressEnable(true);
@@ -68,7 +71,7 @@ namespace MemCached.clientlib
 	/// 
 	/// 
 	/// //***To store an object:***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string key   = "cacheKey1";	
 	/// object value = SomeClass.getObject();	
 	/// mc.set(key, value);
@@ -79,7 +82,7 @@ namespace MemCached.clientlib
 	/// //The add and replace methods do the same, but with a slight difference.
 	/// //  add -- will store the object only if the server does not have an entry for this key
 	/// //  replace -- will store the object only if the server already has an entry for this key
-	///	MemCachedClient mc = new MemCachedClient();
+	///	MemcachedClient mc = new MemcachedClient();
 	///	string key   = "cacheKey1";	
 	///	object value = SomeClass.getObject();	
 	///	int hash = 45;
@@ -87,20 +90,20 @@ namespace MemCached.clientlib
 	/// 
 	/// 
 	/// //***To delete a cache entry:***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string key   = "cacheKey1";	
 	/// mc.delete(key);
 	/// 
 	/// 
 	/// //***To delete a cache entry using a custom hash code:***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string key   = "cacheKey1";	
 	/// int hash = 45;
 	/// mc.delete(key, hashCode);
 	/// 
 	/// 
 	/// //***To store a counter and then increment or decrement that counter:***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string key   = "counterKey";	
 	/// mc.storeCounter(key, 100);
 	/// Console.WriteLine("counter after adding      1: " mc.incr(key));	
@@ -110,7 +113,7 @@ namespace MemCached.clientlib
 	/// 
 	/// 
 	/// //***To store a counter and then increment or decrement that counter with custom hash:***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string key   = "counterKey";	
 	/// int hash = 45;	
 	/// mc.storeCounter(key, 100, hash);
@@ -121,83 +124,82 @@ namespace MemCached.clientlib
 	/// 
 	/// 
 	/// //***To retrieve an object from the cache:***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string key   = "key";	
 	/// object value = mc.get(key);	
 	///
 	///
 	/// //***To retrieve an object from the cache with custom hash:***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string key   = "key";	
 	/// int hash = 45;	
 	/// object value = mc.get(key, hash);
 	/// 
 	/// 
 	/// //***To retrieve an multiple objects from the cache***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string[] keys   = { "key", "key1", "key2" };
 	/// object value = mc.getMulti(keys);
 	/// 
 	///
 	/// //***To retrieve an multiple objects from the cache with custom hashing***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// string[] keys    = { "key", "key1", "key2" };
 	/// int[] hashes = { 45, 32, 44 };
 	/// object value = mc.getMulti(keys, hashes);
 	/// 
 	///
 	/// //***To flush all items in server(s)***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// mc.FlushAll();
 	/// 
 	///
 	/// //***To get stats from server(s)***
-	/// MemCachedClient mc = new MemCachedClient();
+	/// MemcachedClient mc = new MemcachedClient();
 	/// Hashtable stats = mc.stats();
 	/// </example>
-	public class MemCachedClient 
+	public class MemcachedClient 
 	{
 
 		// logger
-		private static Logger log =
-			Logger.getLogger(typeof(MemCachedClient).Name);
+		private static ILog log = LogManager.GetLogger(typeof(MemcachedClient));
 
 		// return codes
-		private static readonly string VALUE        = "VALUE";			// start of value line from server
-		private static readonly string STATS        = "STAT";			// start of stats line from server
-		private static readonly string DELETED      = "DELETED";		// successful deletion
-		private static readonly string NOTFOUND     = "NOT_FOUND";		// record not found for delete or incr/decr
-		private static readonly string STORED       = "STORED";		// successful store of data
-		private static readonly string NOTSTORED    = "NOT_STORED";	// data not stored
-		private static readonly string OK           = "OK";			// success
-		private static readonly string END          = "END";			// end of data from server
-		private static readonly string ERROR        = "ERROR";			// invalid command name from client
-		private static readonly string CLIENT_ERROR = "CLIENT_ERROR";	// client error in input line - invalid protocol
-		private static readonly string SERVER_ERROR = "SERVER_ERROR";	// server error
+		private const string VALUE = "VALUE"; // start of value line from server
+        private const string STATS = "STAT"; // start of stats line from server
+        private const string DELETED = "DELETED"; // successful deletion
+        private const string NOTFOUND = "NOT_FOUND"; // record not found for delete or incr/decr
+        private const string STORED = "STORED"; // successful store of data
+        private const string NOTSTORED = "NOT_STORED"; // data not stored
+        private const string OK = "OK"; // success
+        private const string END = "END"; // end of data from server
+        private const string ERROR = "ERROR"; // invalid command name from client
+        private const string CLIENT_ERROR = "CLIENT_ERROR"; // client error in input line - invalid protocol
+        private const string SERVER_ERROR = "SERVER_ERROR";	// server error
 
 		// default compression threshold
-		private static readonly int COMPRESS_THRESH = 30720;
+		private const int COMPRESS_THRESH = 30720;
     
 		// values for cache flags 
 		//
 		// using 8 (1 << 3) so other clients don't try to unpickle/unstore/whatever
 		// things that are serialized... I don't think they'd like it. :)
-		private static readonly int F_COMPRESSED = 2;
-		private static readonly int F_SERIALIZED = 8;
+		private const int F_COMPRESSED = 2;
+		private const int F_SERIALIZED = 8;
 	
 		// flags
-		private bool primitiveAsString;
-		private bool compressEnable;
-		private long compressThreshold;
-		private string defaultEncoding;
+		private bool _primitiveAsString;
+		private bool _compressEnable;
+		private long _compressThreshold;
+		private string _defaultEncoding;
 
 		// which pool to use
-		private string poolName;
+		private string _poolName;
 
 		/// <summary>
-		/// Creates a new instance of MemCachedClient.
+		/// Creates a new instance of MemcachedClient.
 		/// </summary>
-		public MemCachedClient() 
+		public MemcachedClient() 
 		{
 			Init();
 		}
@@ -209,30 +211,30 @@ namespace MemCached.clientlib
 		/// </summary>
 		private void Init() 
 		{
-			this.primitiveAsString   = false;
-			this.compressEnable      = true;
-			this.compressThreshold   = COMPRESS_THRESH;
-			this.defaultEncoding     = "UTF-8";
-			this.poolName            = "default";
+			_primitiveAsString = false;
+			_compressEnable = true;
+			_compressThreshold = COMPRESS_THRESH;
+			_defaultEncoding = "UTF-8";
+			_poolName = GetLocalizedString("default instance");
 		}
 
 		/// <summary>
 		/// Sets the pool that this instance of the client will use.
 		/// The pool must already be initialized or none of this will work.
 		/// </summary>
-		/// <param name="poolName">name of the pool to use</param>
-		public void SetPoolName( string poolName ) 
-		{
-			this.poolName = poolName;
-		}
+        public string PoolName
+        {
+            get { return _poolName; }
+            set { _poolName = value; }
+        }
 
 		/// <summary>
 		/// Enables storing primitive types as their string values. 
 		/// </summary>
 		public bool PrimitiveAsString
 		{
-			get { return this.primitiveAsString; }
-			set { this.primitiveAsString = value; }
+			get { return _primitiveAsString; }
+			set { _primitiveAsString = value; }
 		}
 
 		/// <summary>
@@ -241,8 +243,8 @@ namespace MemCached.clientlib
 		/// </summary>
 		public string DefaultEncoding
 		{
-			get { return this.defaultEncoding; }
-			set { this.defaultEncoding = value; }
+			get { return _defaultEncoding; }
+			set { _defaultEncoding = value; }
 		}
 
 		/// <summary>
@@ -259,8 +261,8 @@ namespace MemCached.clientlib
 		/// <value><c>true</c> to enable compuression, <c>false</c> to disable compression</value>
 		public bool EnableCompression
 		{
-			get { return this.compressEnable; }
-			set { this.compressEnable = value; }
+			get { return _compressEnable; }
+			set { _compressEnable = value; }
 		}
 
 		/// <summary>
@@ -274,8 +276,8 @@ namespace MemCached.clientlib
 		/// <value>required length of data to consider compression</value>
 		public long CompressionThreshold
 		{
-			get { return this.compressThreshold; }
-			set { this.compressThreshold = value; }
+			get { return _compressThreshold; }
+			set { _compressThreshold = value; }
 		}
 
 		/// <summary>
@@ -283,9 +285,9 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="key">the key to look for</param>
 		/// <returns><c>true</c> if key found in cache, <c>false</c> if not (or if cache is down)</returns>
-		public bool KeyExists( string key ) 
+		public bool KeyExists(string key) 
 		{
-			return ( this.Get( key, null, true ) != null );
+			return(Get(key, null, true) != null);
 		}
 	
 		/// <summary>
@@ -293,9 +295,9 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="key">the key to be removed</param>
 		/// <returns><c>true</c>, if the data was deleted successfully</returns>
-		public bool Delete( string key ) 
+		public bool Delete(string key) 
 		{
-			return Delete( key, null, DateTime.MaxValue );
+			return Delete(key, null, DateTime.MaxValue);
 		}
 
 		/// <summary>
@@ -304,9 +306,9 @@ namespace MemCached.clientlib
 		/// <param name="key">the key to be removed</param>
 		/// <param name="expiry">when to expire the record.</param>
 		/// <returns><c>true</c>, if the data was deleted successfully</returns>
-		public bool Delete( string key, DateTime expiry ) 
+		public bool Delete(string key, DateTime expiry) 
 		{
-			return Delete( key, null, expiry );
+			return Delete(key, null, expiry);
 		}
 
 		/// <summary>
@@ -323,74 +325,71 @@ namespace MemCached.clientlib
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <param name="expiry">when to expire the record.</param>
 		/// <returns><c>true</c>, if the data was deleted successfully</returns>
-		public bool Delete( string key, object hashCode, DateTime expiry ) 
+		public bool Delete(string key, object hashCode, DateTime expiry) 
 		{
-
-			if ( key == null ) 
+			if(key == null) 
 			{
-				log.Error( "null value for key passed to delete()" );
+				log.Error(GetLocalizedString("null key delete"));
 				return false;
 			}
 
 			// get SockIO obj from hash or from key
-			SockIOPool.SockIO sock = SockIOPool.getInstance( poolName ).getSock( key, hashCode );
+			SockIO sock = SockIOPool.GetInstance(_poolName).GetSock(key, hashCode);
 
 			// return false if unable to get SockIO obj
-			if ( sock == null )
+			if(sock == null)
 				return false;
 
 			// build command
-			StringBuilder command = new StringBuilder( "delete " ).Append( key );
-			if ( expiry != DateTime.MaxValue )
-				command.Append( " " + GetExpirationTime(expiry) / 1000 );
+			StringBuilder command = new StringBuilder("delete ").Append(key);
+			if(expiry != DateTime.MaxValue)
+				command.Append(" " + GetExpirationTime(expiry) / 1000);
 
-			command.Append( "\r\n" );
+			command.Append("\r\n");
 		
 			try 
 			{
-				sock.Write( UTF8Encoding.UTF8.GetBytes(command.ToString()) );
+				sock.Write(UTF8Encoding.UTF8.GetBytes(command.ToString()));
 				sock.Flush();
 			
 				// if we get appropriate response back, then we return true
 				string line = sock.ReadLine();
-				if ( DELETED == line ) 
+				if(DELETED == line) 
 				{
-					log.Info( "++++ deletion of key: " + key + " from cache was a success" );
+					log.Info(GetLocalizedString("delete success").Replace("$$Key$$", key));
 
 					// return sock to pool and bail here
 					sock.Close();
 					sock = null;
 					return true;
 				}
-				else if ( NOTFOUND == line ) 
+				else if(NOTFOUND == line) 
 				{
-					log.Info( "++++ deletion of key: " + key + " from cache failed as the key was not found" );
+					log.Info(GetLocalizedString("delete key not found").Replace("$$Key$$", key));
 				}
 				else 
 				{
-					log.Error( "++++ error deleting key: " + key );
-					log.Error( line );
+					log.Error(GetLocalizedString("delete key error").Replace("$$Key$$", key).Replace("$$Line$$", line));
 				}
 			}
-			catch ( IOException e) 
+			catch(IOException e) 
 			{
 				// exception thrown
-				log.Error( "++++ exception thrown while writing bytes to server on delete" );
-				log.Error( e.Message, e );
+                log.Error(GetLocalizedString("delete IOException"), e);
 
 				try 
 				{
 					sock.TrueClose();
 				}
-				catch ( IOException ) 
+				catch(IOException ioe) 
 				{
-					log.Error( "++++ failed to close socket : " + sock.ToString() );
+					log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
 				}
 
 				sock = null;
 			}
 
-			if ( sock != null )
+			if(sock != null)
 				sock.Close();
 
 			return false;
@@ -401,7 +400,7 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="ticks"></param>
 		/// <returns></returns>
-		private int GetExpirationTime(DateTime expiration)
+		private static int GetExpirationTime(DateTime expiration)
 		{
 			if(expiration <= new DateTime(1970, 1, 1))
 				return 0;
@@ -419,9 +418,9 @@ namespace MemCached.clientlib
 		/// <param name="key">key to store data under</param>
 		/// <param name="value">value to store</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Set( string key, object value ) 
+		public bool Set(string key, object value) 
 		{
-			return Set( "set", key, value, DateTime.MaxValue, null, primitiveAsString );
+			return Set("set", key, value, DateTime.MaxValue, null, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -431,9 +430,9 @@ namespace MemCached.clientlib
 		/// <param name="value">value to store</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Set( string key, object value, int hashCode ) 
+		public bool Set(string key, object value, int hashCode) 
 		{
-			return Set( "set", key, value, DateTime.MaxValue, hashCode, primitiveAsString );
+			return Set("set", key, value, DateTime.MaxValue, hashCode, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -443,9 +442,9 @@ namespace MemCached.clientlib
 		/// <param name="value">value to store</param>
 		/// <param name="expiry">when to expire the record</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Set( string key, object value, DateTime expiry ) 
+		public bool Set(string key, object value, DateTime expiry) 
 		{
-			return Set( "set", key, value, expiry, null, primitiveAsString );
+			return Set("set", key, value, expiry, null, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -456,9 +455,9 @@ namespace MemCached.clientlib
 		/// <param name="expiry">when to expire the record</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Set( string key, object value, DateTime expiry, int hashCode ) 
+		public bool Set(string key, object value, DateTime expiry, int hashCode) 
 		{
-			return Set( "set", key, value, expiry, hashCode, primitiveAsString );
+			return Set("set", key, value, expiry, hashCode, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -467,9 +466,9 @@ namespace MemCached.clientlib
 		/// <param name="key">key to store data under</param>
 		/// <param name="value">value to store</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Add( string key, object value ) 
+		public bool Add(string key, object value) 
 		{
-			return Set( "add", key, value, DateTime.MaxValue, null, primitiveAsString );
+			return Set("add", key, value, DateTime.MaxValue, null, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -479,9 +478,9 @@ namespace MemCached.clientlib
 		/// <param name="value">value to store</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Add( string key, object value, int hashCode ) 
+		public bool Add(string key, object value, int hashCode) 
 		{
-			return Set( "add", key, value, DateTime.MaxValue, hashCode, primitiveAsString );
+			return Set("add", key, value, DateTime.MaxValue, hashCode, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -491,9 +490,9 @@ namespace MemCached.clientlib
 		/// <param name="value">value to store</param>
 		/// <param name="expiry">when to expire the record</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Add( string key, object value, DateTime expiry ) 
+		public bool Add(string key, object value, DateTime expiry) 
 		{
-			return Set( "add", key, value, expiry, null, primitiveAsString );
+			return Set("add", key, value, expiry, null, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -504,9 +503,9 @@ namespace MemCached.clientlib
 		/// <param name="expiry">when to expire the record</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Add( string key, object value, DateTime expiry, int hashCode ) 
+		public bool Add(string key, object value, DateTime expiry, int hashCode) 
 		{
-			return Set( "add", key, value, expiry, hashCode, primitiveAsString );
+			return Set("add", key, value, expiry, hashCode, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -515,9 +514,9 @@ namespace MemCached.clientlib
 		/// <param name="key">key to store data under</param>
 		/// <param name="value">value to store</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Replace( string key, object value ) 
+		public bool Replace(string key, object value) 
 		{
-			return Set( "replace", key, value, DateTime.MaxValue, null, primitiveAsString );
+			return Set("replace", key, value, DateTime.MaxValue, null, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -527,9 +526,9 @@ namespace MemCached.clientlib
 		/// <param name="value">value to store</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Replace( string key, object value, int hashCode ) 
+		public bool Replace(string key, object value, int hashCode) 
 		{
-			return Set( "replace", key, value, DateTime.MaxValue, hashCode, primitiveAsString );
+			return Set("replace", key, value, DateTime.MaxValue, hashCode, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -539,9 +538,9 @@ namespace MemCached.clientlib
 		/// <param name="value">value to store</param>
 		/// <param name="expiry">when to expire the record</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Replace( string key, object value, DateTime expiry ) 
+		public bool Replace(string key, object value, DateTime expiry) 
 		{
-			return Set( "replace", key, value, expiry, null, primitiveAsString );
+			return Set("replace", key, value, expiry, null, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -552,9 +551,9 @@ namespace MemCached.clientlib
 		/// <param name="expiry">when to expire the record</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>true, if the data was successfully stored</returns>
-		public bool Replace( string key, object value, DateTime expiry, int hashCode ) 
+		public bool Replace(string key, object value, DateTime expiry, int hashCode) 
 		{
-			return Set( "replace", key, value, expiry, hashCode, primitiveAsString );
+			return Set("replace", key, value, expiry, hashCode, _primitiveAsString);
 		}
 
 		/// <summary>
@@ -576,22 +575,22 @@ namespace MemCached.clientlib
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <param name="asString">store this object as a string?</param>
 		/// <returns>true/false indicating success</returns>
-		private bool Set( string cmdname, string key, object obj, DateTime expiry, object hashCode, bool asString ) 
+		private bool Set(string cmdname, string key, object obj, DateTime expiry, object hashCode, bool asString) 
 		{
 
-			if ( cmdname == null || cmdname.Trim() == "" || key == null ) 
+			if(cmdname == null || cmdname.Trim().Length == 0 || key == null || key.Length == 0) 
 			{
-				log.Error( "key is null or cmd is null/empty for set()" );
+				log.Error(GetLocalizedString("set key null"));
 				return false;
 			}
 
 			// get SockIO obj
-			SockIOPool.SockIO sock = SockIOPool.getInstance( poolName ).getSock( key, hashCode );
+			SockIO sock = SockIOPool.GetInstance(_poolName).GetSock(key, hashCode);
 		
-			if ( sock == null )
+			if(sock == null)
 				return false;
 		
-			if ( expiry == DateTime.MaxValue )
+			if(expiry == DateTime.MaxValue)
 				expiry = new DateTime(0);
 
 			// store flags
@@ -600,23 +599,23 @@ namespace MemCached.clientlib
 			// byte array to hold data
 			byte[] val;
 
-			if ( NativeHandler.isHandled( obj ) ) 
+			if(NativeHandler.IsHandled(obj)) 
 			{
 			
-				if ( asString ) 
+				if(asString) 
 				{
-                    if (obj != null)
+                    if(obj != null)
                     {
                         // useful for sharing data between java and non-java
                         // and also for storing ints for the increment method
-                        log.Info("++++ storing data as a string for key: " + key + " for class: " + obj.GetType().Name);
+                        log.Info(GetLocalizedString("set store data as string").Replace("$$Key$$", key).Replace("$$Class$$", obj.GetType().Name));
                         try
                         {
                             val = UTF8Encoding.UTF8.GetBytes(obj.ToString());
                         }
-                        catch (Exception)
+                        catch(ArgumentException ex)
                         {
-                            log.Error("invalid encoding type used: " + defaultEncoding);
+                            log.Error(GetLocalizedString("set invalid encoding type").Replace("$$Encoding$$", _defaultEncoding), ex);
                             sock.Close();
                             sock = null;
                             return false;
@@ -629,15 +628,15 @@ namespace MemCached.clientlib
 				}
 				else 
 				{
-					log.Info( "Storing with native handler..." );
+					log.Info(GetLocalizedString("set store with native handler"));
 
 					try 
 					{
-						val = NativeHandler.encode( obj );
+						val = NativeHandler.Encode(obj);
 					}
-					catch ( Exception e ) 
+					catch(ArgumentException e) 
 					{
-						log.Error( "Failed to native handle obj", e );
+						log.Error(GetLocalizedString("set failed to native handle object"), e);
 
 						sock.Close();
 						sock = null;
@@ -647,10 +646,10 @@ namespace MemCached.clientlib
 			}
 			else 
 			{
-                if (obj != null)
+                if(obj != null)
                 {
                     // always serialize for non-primitive types
-                    log.Info("++++ serializing for key: " + key + " for class: " + obj.GetType().Name);
+                    log.Info(GetLocalizedString("set serializing".Replace("$$Key$$", key).Replace("$$Class$$", obj.GetType().Name)));
                     try
                     {
                         MemoryStream memStream = new MemoryStream();
@@ -658,12 +657,11 @@ namespace MemCached.clientlib
                         val = memStream.GetBuffer();
                         flags |= F_SERIALIZED;
                     }
-                    catch (IOException e)
+                    catch(IOException e)
                     {
                         // if we fail to serialize, then
                         // we bail
-                        log.Error("failed to serialize obj", e);
-                        log.Error(obj.ToString());
+                        log.Error(GetLocalizedString("set failed to serialize").Replace("$$Object$$", obj.ToString()), e);
 
                         // return socket to pool and bail
                         sock.Close();
@@ -679,28 +677,27 @@ namespace MemCached.clientlib
 		
 			// now try to compress if we want to
 			// and if the length is over the threshold 
-			if ( compressEnable && val.Length > compressThreshold ) 
+			if(_compressEnable && val.Length > _compressThreshold) 
 			{
-				log.Info( "++++ trying to compress data" );
-				log.Info( "++++ size prior to compression: " + val.Length );
+				log.Info(GetLocalizedString("set trying to compress data"));
+				log.Info(GetLocalizedString("set size prior").Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())));
 
 				try 
 				{
 					MemoryStream memoryStream = new MemoryStream();
-					GZipOutputStream gos = new GZipOutputStream( memoryStream );
-					gos.Write( val, 0, val.Length );
+					GZipOutputStream gos = new GZipOutputStream(memoryStream);
+					gos.Write(val, 0, val.Length);
 					gos.Finish();
 				
 					// store it and set compression flag
 					val = memoryStream.GetBuffer();
 					flags |= F_COMPRESSED;
 
-					log.Info( "++++ compression succeeded, size after: " + val.Length );
+					log.Info(GetLocalizedString("set compression success").Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())));
 				}
-				catch (IOException e) 
+				catch(IOException e) 
 				{
-					log.Error( "IOException while compressing stream: " + e.ToString() );
-					log.Error( "storing data uncompressed" );
+					log.Error(GetLocalizedString("set compression failure"), e);
 				}
 			}
 
@@ -709,51 +706,49 @@ namespace MemCached.clientlib
 			{
 				string cmd = cmdname + " " + key + " " + flags + " "
 					+ GetExpirationTime(expiry) + " " + val.Length + "\r\n";
-				sock.Write( UTF8Encoding.UTF8.GetBytes( cmd ) );
-				sock.Write( val );
-				sock.Write( UTF8Encoding.UTF8.GetBytes( "\r\n" ) );
+				sock.Write(UTF8Encoding.UTF8.GetBytes(cmd));
+				sock.Write(val);
+				sock.Write(UTF8Encoding.UTF8.GetBytes("\r\n"));
 				sock.Flush();
 
 				// get result code
 				string line = sock.ReadLine();
-				log.Info( "++++ memcache cmd (result code): " + cmd + " (" + line + ")" );
+				log.Info(GetLocalizedString("set memcached command result").Replace("$$Cmd$$", cmd).Replace("$$Line$$", line));
 
-				if ( STORED == line ) 
+				if(STORED == line) 
 				{
-					log.Info("++++ data successfully stored for key: " + key );
+					log.Info(GetLocalizedString("set success").Replace("$$Key$$", key));
 					sock.Close();
 					sock = null;
 					return true;
 				}
-				else if ( NOTSTORED == line ) 
+				else if(NOTSTORED == line) 
 				{
-					log.Info( "++++ data not stored in cache for key: " + key );
+					log.Info(GetLocalizedString("set not stored").Replace("$$Key$$", key));
 				}
 				else 
 				{
-					log.Error( "++++ error storing data in cache for key: " + key + " -- length: " + val.Length);
-					log.Error( line );
+					log.Error(GetLocalizedString("set error").Replace("$$Key$$", key).Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())).Replace("$$Line$$", line));
 				}
 			}
-			catch ( IOException e ) 
+			catch(IOException e) 
 			{
 				// exception thrown
-				log.Error( "++++ exception thrown while writing bytes to server on delete" );
-				log.Error( e.ToString(), e );
+				log.Error(GetLocalizedString("set IOException"), e);
 
 				try 
 				{
 					sock.TrueClose();
 				}
-				catch ( IOException ) 
+				catch(IOException ioe) 
 				{
-					log.Error( "++++ failed to close socket : " + sock.ToString() );
+					log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
 				}
 
 				sock = null;
 			}
 
-			if ( sock != null )
+			if(sock != null)
 				sock.Close();
 
 			return false;
@@ -765,9 +760,9 @@ namespace MemCached.clientlib
 		/// <param name="key">cache key</param>
 		/// <param name="counter">number to store</param>
 		/// <returns>true/false indicating success</returns>
-		public bool StoreCounter( string key, long counter ) 
+		public bool StoreCounter(string key, long counter) 
 		{
-			return Set( "set", key, counter, DateTime.MaxValue, null, true );
+			return Set("set", key, counter, DateTime.MaxValue, null, true);
 		}
     
 		/// <summary>
@@ -777,9 +772,9 @@ namespace MemCached.clientlib
 		/// <param name="counter">number to store</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>true/false indicating success</returns>
-		public bool StoreCounter( string key, long counter, int hashCode ) 
+		public bool StoreCounter(string key, long counter, int hashCode) 
 		{
-			return Set( "set", key, counter, DateTime.MaxValue, hashCode, true );
+			return Set("set", key, counter, DateTime.MaxValue, hashCode, true);
 		}
 
 		/// <summary>
@@ -787,9 +782,9 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="key">cache ket</param>
 		/// <returns>counter value or -1 if not found</returns>
-		public long GetCounter( string key ) 
+		public long GetCounter(string key) 
 		{
-			return GetCounter( key, null );
+			return GetCounter(key, null);
 		}
 
 		/// <summary>
@@ -798,24 +793,24 @@ namespace MemCached.clientlib
 		/// <param name="key">cache ket</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>counter value or -1 if not found</returns>
-		public long GetCounter( string key, object hashCode ) 
+		public long GetCounter(string key, object hashCode) 
 		{
 
-			if ( key == null ) 
+			if(key == null) 
 			{
-				log.Error( "null key for getCounter()" );
+				log.Error(GetLocalizedString("getcounter null key"));
 				return -1;
 			}
 
 			long counter = -1;
 			try 
 			{
-				counter = long.Parse( (string)Get( key, hashCode, true ) );
+				counter = long.Parse((string)Get(key, hashCode, true), new NumberFormatInfo());
 			}
-			catch ( Exception ) 
+			catch(ArgumentException) 
 			{
 				// not found or error getting out
-				log.Error( "counter not found at key: " + key );
+				log.Error(GetLocalizedString("getcounter counter not found").Replace("$$Key$$", key));
 			}
 		
 			return counter;
@@ -826,9 +821,9 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="key">key where the data is stored</param>
 		/// <returns>-1, if the key is not found, the value after incrementing otherwise</returns>
-		public long Increment( string key ) 
+		public long Increment(string key) 
 		{
-			return IncrementOrDecrement( "incr", key, 1, null );
+			return IncrementOrDecrement("incr", key, 1, null);
 		}
 
 		/// <summary>
@@ -837,9 +832,9 @@ namespace MemCached.clientlib
 		/// <param name="key">key where the data is stored</param>
 		/// <param name="inc">how much to increment by</param>
 		/// <returns>-1, if the key is not found, the value after incrementing otherwise</returns>
-		public long Increment( string key, long inc ) 
+		public long Increment(string key, long inc) 
 		{
-			return IncrementOrDecrement( "incr", key, inc, null );
+			return IncrementOrDecrement("incr", key, inc, null);
 		}
 
 		/// <summary>
@@ -849,9 +844,9 @@ namespace MemCached.clientlib
 		/// <param name="inc">how much to increment by</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>-1, if the key is not found, the value after incrementing otherwise</returns>
-		public long Increment( string key, long inc, int hashCode ) 
+		public long Increment(string key, long inc, int hashCode) 
 		{
-			return IncrementOrDecrement( "incr", key, inc, hashCode );
+			return IncrementOrDecrement("incr", key, inc, hashCode);
 		}
 	
 		/// <summary>
@@ -859,9 +854,9 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="key">key where the data is stored</param>
 		/// <returns>-1, if the key is not found, the value after incrementing otherwise</returns>
-		public long Decrement( string key ) 
+		public long Decrement(string key) 
 		{
-			return IncrementOrDecrement( "decr", key, 1, null );
+			return IncrementOrDecrement("decr", key, 1, null);
 		}
 
 		/// <summary>
@@ -870,9 +865,9 @@ namespace MemCached.clientlib
 		/// <param name="key">key where the data is stored</param>
 		/// <param name="inc">how much to increment by</param>
 		/// <returns>-1, if the key is not found, the value after incrementing otherwise</returns>
-		public long Decrement( string key, long inc ) 
+		public long Decrement(string key, long inc) 
 		{
-			return IncrementOrDecrement( "decr", key, inc, null );
+			return IncrementOrDecrement("decr", key, inc, null);
 		}
 
 		/// <summary>
@@ -882,9 +877,9 @@ namespace MemCached.clientlib
 		/// <param name="inc">how much to increment by</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>-1, if the key is not found, the value after incrementing otherwise</returns>
-		public long Decrement( string key, long inc, int hashCode ) 
+		public long Decrement(string key, long inc, int hashCode) 
 		{
-			return IncrementOrDecrement( "decr", key, inc, hashCode );
+			return IncrementOrDecrement("decr", key, inc, hashCode);
 		}
 
 		/// <summary>
@@ -907,45 +902,44 @@ namespace MemCached.clientlib
 		{
 
 			// get SockIO obj for given cache key
-			SockIOPool.SockIO sock = SockIOPool.getInstance( poolName ).getSock(key, hashCode);
+			SockIO sock = SockIOPool.GetInstance(_poolName).GetSock(key, hashCode);
 
-			if (sock == null)
+			if(sock == null)
 				return -1;
 		
 			try 
 			{
 				string cmd = cmdname + " " + key + " " + inc + "\r\n";
-				log.Debug("++++ memcache incr/decr command: " + cmd);
+				log.Debug(GetLocalizedString("incr-decr command").Replace("$$Cmd$$", cmd));
 
-				sock.Write(UTF8Encoding.UTF8.GetBytes( cmd ));
+				sock.Write(UTF8Encoding.UTF8.GetBytes(cmd));
 				sock.Flush();
 
 				// get result back
 				string line = sock.ReadLine();
 
-				if (new Regex("\\d+").Match(line).Success) 
+				if(new Regex("\\d+").Match(line).Success) 
 				{
 
 					// return sock to pool and return result
 					sock.Close();
-					return long.Parse(line);
+					return long.Parse(line, new NumberFormatInfo());
 
 				} 
-				else if (NOTFOUND == line) 
+				else if(NOTFOUND == line) 
 				{
-					log.Info("++++ key not found to incr/decr for key: " + key);
+					log.Info(GetLocalizedString("incr-decr key not found").Replace("$$Key$$", key));
 
 				} 
 				else 
 				{
-					log.Error("error incr/decr key: " + key);
+					log.Error(GetLocalizedString("incr-decr key error").Replace("$$Key$$", key));
 				}
 			}
-			catch (IOException e) 
+			catch(IOException e) 
 			{
 				// exception thrown
-				log.Error("++++ exception thrown while writing bytes to server on incr/decr");
-				log.Error(e.ToString(), e);
+				log.Error(GetLocalizedString("incr-decr IOException"), e);
 
 				try 
 				{
@@ -953,13 +947,13 @@ namespace MemCached.clientlib
 				}
 				catch(IOException) 
 				{
-					log.Error("++++ failed to close socket : " + sock.ToString());
+					log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()));
 				}
 
 				sock = null;
 			}
 		
-			if (sock != null)
+			if(sock != null)
 				sock.Close();
 			return -1;
 		}
@@ -977,7 +971,7 @@ namespace MemCached.clientlib
 		/// <returns>the object that was previously stored, or null if it was not previously stored</returns>
 		public object Get(string key) 
 		{
-			return Get( key, null, false );
+			return Get(key, null, false);
 		}
 
 		/// <summary>
@@ -992,9 +986,9 @@ namespace MemCached.clientlib
 		/// <param name="key">key where data is stored</param>
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <returns>the object that was previously stored, or null if it was not previously stored</returns>
-		public object Get( string key, int hashCode ) 
+		public object Get(string key, int hashCode) 
 		{
-			return Get( key, hashCode, false );
+			return Get(key, hashCode, false);
 		}
 
 		/// <summary>
@@ -1010,30 +1004,30 @@ namespace MemCached.clientlib
 		/// <param name="hashCode">if not null, then the int hashcode to use</param>
 		/// <param name="asString">if true, then return string val</param>
 		/// <returns>the object that was previously stored, or null if it was not previously stored</returns>
-		public object Get( string key, object hashCode, bool asString ) 
+		public object Get(string key, object hashCode, bool asString) 
 		{
 
 			// get SockIO obj using cache key
-			SockIOPool.SockIO sock = SockIOPool.getInstance( poolName ).getSock(key, hashCode);
+			SockIO sock = SockIOPool.GetInstance(_poolName).GetSock(key, hashCode);
 	    
-			if (sock == null)
+			if(sock == null)
 				return null;
 
 			try 
 			{
 				string cmd = "get " + key + "\r\n";
-				log.Debug("++++ memcache get command: " + cmd);
+				log.Debug(GetLocalizedString("get memcached command").Replace("$$Cmd$$", cmd));
 
-				sock.Write( UTF8Encoding.UTF8.GetBytes(cmd) );
+				sock.Write(UTF8Encoding.UTF8.GetBytes(cmd));
 				sock.Flush();
 
 				// build empty map
 				// and fill it from server
 				Hashtable hm = new Hashtable();
-				LoadItems( sock, hm, asString );
+				LoadItems(sock, hm, asString);
 
 				// debug code
-				log.Debug("++++ memcache: got back " + hm.Count + " results");
+				log.Debug(GetLocalizedString("get memcached result").Replace("$$Results$$", hm.Count.ToString(new NumberFormatInfo())));
 
 				// return the value for this key if we found it
 				// else return null 
@@ -1041,24 +1035,23 @@ namespace MemCached.clientlib
 				return hm[key];
 
 			}
-			catch (IOException e) 
+			catch(IOException e) 
 			{
 				// exception thrown
-				log.Error("++++ exception thrown while trying to get object from cache for key: " + key);
-				log.Error(e.ToString(), e);
+				log.Error(GetLocalizedString("get IOException").Replace("$$Key$$", key), e);
 
 				try 
 				{
 					sock.TrueClose();
 				}
-				catch(IOException) 
+				catch(IOException ioe) 
 				{
-					log.Error("++++ failed to close socket : " + sock.ToString());
+					log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
 				}
 				sock = null;
 			}
 
-			if (sock != null)
+			if(sock != null)
 				sock.Close();
 
 			return null;
@@ -1072,9 +1065,9 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="keys">string array of keys to retrieve</param>
 		/// <returns>object array ordered in same order as key array containing results</returns>
-		public object[] GetMultiArray( string[] keys ) 
+		public object[] GetMultipleArray(string[] keys) 
 		{
-			return GetMultiArray( keys, null, false );
+            return GetMultipleArray(keys, null, false);
 		}
 
 		/// <summary>
@@ -1086,9 +1079,9 @@ namespace MemCached.clientlib
 		/// <param name="keys">string array of keys to retrieve</param>
 		/// <param name="hashCodes">if not null, then the int array of hashCodes</param>
 		/// <returns>object array ordered in same order as key array containing results</returns>
-		public object[] GetMultiArray( string[] keys, int[] hashCodes ) 
+        public object[] GetMultipleArray(string[] keys, int[] hashCodes) 
 		{
-			return GetMultiArray( keys, hashCodes, false );
+            return GetMultipleArray(keys, hashCodes, false);
 		}
 
 		/// <summary>
@@ -1101,13 +1094,15 @@ namespace MemCached.clientlib
 		/// <param name="hashCodes">if not null, then the int array of hashCodes</param>
 		/// <param name="asString">asString if true, retrieve string vals</param>
 		/// <returns>object array ordered in same order as key array containing results</returns>
-		public object[] GetMultiArray( string[] keys, int[] hashCodes, bool asString ) 
+        public object[] GetMultipleArray(string[] keys, int[] hashCodes, bool asString) 
 		{
+			if(keys == null)
+				return new object[0];
 
-			Hashtable data = GetMulti( keys, hashCodes, asString );
+            Hashtable data = GetMultiple(keys, hashCodes, asString);
 
 			object[] res = new object[keys.Length];
-			for (int i = 0; i < keys.Length; i++) 
+			for(int i = 0; i < keys.Length; i++) 
 			{
 				res[i] = data[ keys[i] ];
 			}
@@ -1127,9 +1122,9 @@ namespace MemCached.clientlib
 		/// keys that are not found are not entered into the hashmap, but attempting to
 		/// retrieve them from the hashmap gives you null.
 		/// </returns>
-		public Hashtable GetMulti( string[] keys ) 
+		public Hashtable GetMultiple(string[] keys) 
 		{
-			return GetMulti( keys, null, false );
+            return GetMultiple(keys, null, false);
 		}
     
 		/// <summary>
@@ -1145,9 +1140,9 @@ namespace MemCached.clientlib
 		/// keys that are not found are not entered into the hashmap, but attempting to
 		/// retrieve them from the hashmap gives you null.
 		/// </returns>
-		public Hashtable GetMulti( string[] keys, int[] hashCodes ) 
+        public Hashtable GetMultiple(string[] keys, int[] hashCodes) 
 		{
-			return GetMulti( keys, hashCodes, false );
+            return GetMultiple(keys, hashCodes, false);
 		}
 
 		/// <summary>
@@ -1164,56 +1159,57 @@ namespace MemCached.clientlib
 		/// keys that are not found are not entered into the hashmap, but attempting to
 		/// retrieve them from the hashmap gives you null.
 		/// </returns>
-		public Hashtable GetMulti( string[] keys, int[] hashCodes, bool asString ) 
+        public Hashtable GetMultiple(string[] keys, int[] hashCodes, bool asString) 
 		{
+			if(keys == null)
+				return new Hashtable();
+
 			Hashtable sockKeys = new Hashtable();
 
-			for (int i = 0; i < keys.Length; ++i) 
+			for(int i = 0; i < keys.Length; ++i) 
 			{
-
 				object hash = null;
-				if ( hashCodes != null && hashCodes.Length > i )
+				if(hashCodes != null && hashCodes.Length > i)
 					hash = hashCodes[i];
 
 				// get SockIO obj from cache key
-				SockIOPool.SockIO sock = SockIOPool.getInstance( poolName ).getSock(keys[i], hash);
+				SockIO sock = SockIOPool.GetInstance(_poolName).GetSock(keys[i], hash);
 
-				if (sock == null)
+				if(sock == null)
 					continue;
 
 				// store in map and list if not already
-				if ( !sockKeys.ContainsKey( sock.Host ) )
+				if(!sockKeys.ContainsKey(sock.Host))
 					sockKeys[ sock.Host ] = new StringBuilder();
 
-				((StringBuilder)sockKeys[ sock.Host ]).Append( " " + keys[i] );
+				((StringBuilder)sockKeys[ sock.Host ]).Append(" " + keys[i]);
 
 				// return to pool
 				sock.Close();
 			}
 		
-			log.Info( "multi get socket count : " + sockKeys.Count );
+			log.Info(GetLocalizedString("getmultiple socket count").Replace("$$Sockets$$", sockKeys.Count.ToString(new NumberFormatInfo())));
 
 			// now query memcache
 			Hashtable ret = new Hashtable();
 			ArrayList toRemove = new ArrayList();
-			foreach (string host in sockKeys.Keys) 
+			foreach(string host in sockKeys.Keys) 
 			{
 				// get SockIO obj from hostname
-				SockIOPool.SockIO sock = SockIOPool.getInstance( poolName ).getConnection(host);
+				SockIO sock = SockIOPool.GetInstance(_poolName).GetConnection(host);
 
 				try 
 				{
 					string cmd = "get" + (StringBuilder) sockKeys[ host ] + "\r\n";
-					log.Debug( "++++ memcache getMulti cmd: " + cmd );
-					sock.Write( UTF8Encoding.UTF8.GetBytes( cmd ) );
+					log.Debug(GetLocalizedString("getmultiple memcached command").Replace("$$Cmd$$", cmd));
+					sock.Write(UTF8Encoding.UTF8.GetBytes(cmd));
 					sock.Flush();
-					LoadItems( sock, ret, asString );
+					LoadItems(sock, ret, asString);
 				}
-				catch (IOException e) 
+				catch(IOException e) 
 				{
 					// exception thrown
-					log.Error("++++ exception thrown while getting from cache on getMulti");
-					log.Error(e.ToString(), e);
+					log.Error(GetLocalizedString("getmultiple IOException"), e);
 
 					// clear this sockIO obj from the list
 					// and from the map containing keys
@@ -1222,15 +1218,15 @@ namespace MemCached.clientlib
 					{
 						sock.TrueClose();
 					}
-					catch(IOException) 
+					catch(IOException ioe) 
 					{
-						log.Error("++++ failed to close socket : " + sock.ToString());
+						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
 					}
 					sock = null;
 				}
 
 				// Return socket to pool
-				if (sock != null)
+				if(sock != null)
 					sock.Close();
 			}
 
@@ -1238,8 +1234,8 @@ namespace MemCached.clientlib
 			{
 				sockKeys.Remove(host);
 			}
-		
-			log.Debug("++++ memcache: got back " + ret.Count + " results");
+			
+			log.Debug(GetLocalizedString("getmultiple results").Replace("$$Results$$", ret.Count.ToString(new NumberFormatInfo())));
 			return ret;
 		}
     
@@ -1252,35 +1248,32 @@ namespace MemCached.clientlib
 		/// <param name="sock">socket waiting to pass back data</param>
 		/// <param name="hm">hashmap to store data into</param>
 		/// <param name="asString">if true, and if we are using NativehHandler, return string val</param>
-		private void LoadItems( SockIOPool.SockIO sock, Hashtable hm, bool asString ) 
+		private void LoadItems(SockIO sock, Hashtable hm, bool asString) 
 		{
-
-			while ( true ) 
+			while(true) 
 			{
 				string line = sock.ReadLine();
-				log.Debug( "++++ line: " + line );
+				log.Debug(GetLocalizedString("loaditems line").Replace("$$Line$$", line));
 
-				if (line.StartsWith(VALUE)) 
+				if(line.StartsWith(VALUE)) 
 				{
 					string[] info = line.Split(' ');
 					string key    = info[1];
-					int flag      = int.Parse(info[2]);
-					int length    = int.Parse(info[3]);
+					int flag      = int.Parse(info[2], new NumberFormatInfo());
+					int length    = int.Parse(info[3], new NumberFormatInfo());
 
-					log.Debug("++++ key: " + key);
-					log.Debug("++++ flags: " + flag);
-					log.Debug("++++ length: " + length);
+					log.Debug(GetLocalizedString("loaditems header").Replace("$$Key$$", key).Replace("$$Flags$$", flag.ToString(new NumberFormatInfo())).Replace("$$Length$$", length.ToString(new NumberFormatInfo())));
 				
 					// read obj into buffer
 					byte[] buf = new byte[length];
 					sock.Read(buf);
-					sock.ClearEOL();
+					sock.ClearEndOfLine();
 
 					// ready object
 					object o;
 				
 					// check for compression
-					if ((flag & F_COMPRESSED) != 0) 
+					if((flag & F_COMPRESSED) != 0) 
 					{
 						try 
 						{
@@ -1292,7 +1285,7 @@ namespace MemCached.clientlib
 							
 							int count;
 							byte[] tmp = new byte[2048];
-							while ((count = gzi.Read(tmp, 0, tmp.Length)) > 0)
+							while((count = gzi.Read(tmp, 0, tmp.Length)) > 0)
 							{
 								bos.Write(tmp, 0, count);
 							}
@@ -1301,34 +1294,33 @@ namespace MemCached.clientlib
 							buf = bos.ToArray();
 							gzi.Close();
 						}
-						catch (IOException e) 
+						catch(IOException e) 
 						{
-							log.Error("++++ IOException thrown while trying to uncompress input stream for key: " + key);
-							log.Error(e.ToString(), e);
-							throw new NestedIOException("++++ IOException thrown while trying to uncompress input stream for key: " + key, e);
+                            log.Error(GetLocalizedString("loaditems uncompression IOException").Replace("$$Key$$", key), e);
+							throw new IOException(GetLocalizedString("loaditems uncompression IOException").Replace("$$Key$$", key), e);
 						}
 					}
 
 					// we can only take out serialized objects
-					if ((flag & F_SERIALIZED) == 0) 
+					if((flag & F_SERIALIZED) == 0) 
 					{
-						if ( primitiveAsString || asString ) 
+						if(_primitiveAsString || asString) 
 						{
 							// pulling out string value
-							log.Info("++++ retrieving object and stuffing into a string.");
-							o = Encoding.GetEncoding(defaultEncoding).GetString(buf);
+							log.Info(GetLocalizedString("loaditems retrieve as string"));
+							o = Encoding.GetEncoding(_defaultEncoding).GetString(buf);
 						}
 						else 
 						{
 							// decoding object
 							try 
 							{
-								o = NativeHandler.decode( buf );    
+								o = NativeHandler.Decode(buf);    
 							}
-							catch ( Exception e ) 
+							catch(Exception e) 
 							{
-								log.Error( "++++ Exception thrown while trying to deserialize for key: " + key, e );
-								throw new NestedIOException( e );
+								log.Error(GetLocalizedString("loaditems deserialize error").Replace("$$Key$$", key), e);
+								throw new IOException(GetLocalizedString("loaditems deserialize error").Replace("$$Key$$", key), e);
 							}
 						}
 					}
@@ -1339,21 +1331,21 @@ namespace MemCached.clientlib
 						{
 							MemoryStream memStream = new MemoryStream(buf);
 							o = new BinaryFormatter().Deserialize(memStream);
-							log.Info("++++ deserializing " + o.GetType().Name);
+							log.Info(GetLocalizedString("loaditems deserializing").Replace("$$Class$$", o.GetType().Name));
 						}
-						catch (SerializationException e) 
+						catch(SerializationException e) 
 						{
-							log.Error("++++ SerializationException thrown while trying to deserialize for key: " + key, e);
-							throw new NestedIOException("+++ failed while trying to deserialize for key: " + key, e);
+							log.Error(GetLocalizedString("loaditems SerializationException").Replace("$$Key$$", key), e);
+							throw new IOException(GetLocalizedString("loaditems SerializationException").Replace("$$Key$$", key), e);
 						}
 					}
 
 					// store the object into the cache
 					hm[ key ] =  o ;
 				}
-				else if ( END == line ) 
+				else if(END == line) 
 				{
-					log.Debug("++++ finished reading from cache server");
+					log.Debug(GetLocalizedString("loaditems finished"));
 					break;
 				}
 			}
@@ -1378,40 +1370,38 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="servers">optional array of host(s) to flush (host:port)</param>
 		/// <returns>success true/false</returns>
-		public bool FlushAll(string[] servers) 
+		public bool FlushAll(ArrayList servers) 
 		{
-
 			// get SockIOPool instance
-			SockIOPool pool = SockIOPool.getInstance( poolName );
+			SockIOPool pool = SockIOPool.GetInstance(_poolName);
 
 			// return false if unable to get SockIO obj
-			if (pool == null) 
+			if(pool == null) 
 			{
-				log.Error("++++ unable to get SockIOPool instance");
+				log.Error(GetLocalizedString("unable to get socket pool"));
 				return false;
 			}
 
 			// get all servers and iterate over them
-			servers = (servers == null)
-				? pool.Servers
-				: servers;
+            if (servers == null)
+                servers = pool.Servers;
 
 			// if no servers, then return early
-			if (servers == null || servers.Length <= 0) 
+			if(servers == null || servers.Count <= 0) 
 			{
-				log.Error("++++ no servers to flush");
+				log.Error(GetLocalizedString("flushall no servers"));
 				return false;
 			}
 
 			bool success = true;
 
-			for (int i = 0; i < servers.Length; i++) 
+			for(int i = 0; i < servers.Count; i++) 
 			{
 
-				SockIOPool.SockIO sock = pool.getConnection(servers[i]);
-				if (sock == null) 
+				SockIO sock = pool.GetConnection((string)servers[i]);
+				if(sock == null) 
 				{
-					log.Error("++++ unable to get connection to : " + servers[i]);
+					log.Error(GetLocalizedString("unable to connect").Replace("$$Server$$", servers[i].ToString()));
 					success = false;
 					continue;
 				}
@@ -1421,7 +1411,7 @@ namespace MemCached.clientlib
 
 				try 
 				{
-					sock.Write(UTF8Encoding.UTF8.GetBytes( command ));
+					sock.Write(UTF8Encoding.UTF8.GetBytes(command));
 					sock.Flush();
 
 					// if we get appropriate response back, then we return true
@@ -1430,26 +1420,25 @@ namespace MemCached.clientlib
 						? success && true
 						: false;
 				}
-				catch (IOException e) 
+				catch(IOException e) 
 				{
 					// exception thrown
-					log.Error("++++ exception thrown while writing bytes to server on delete");
-					log.Error(e.ToString(), e);
+                    log.Error(GetLocalizedString("flushall IOException"), e);
 
 					try 
 					{
 						sock.TrueClose();
 					}
-					catch (IOException) 
+					catch(IOException ioe) 
 					{
-						log.Error("++++ failed to close socket : " + sock.ToString());
+						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
 					}
 
 					success = false;
 					sock = null;
 				}
 
-				if (sock != null)
+				if(sock != null)
 					sock.Close();
 			}
 
@@ -1478,41 +1467,40 @@ namespace MemCached.clientlib
 		/// </summary>
 		/// <param name="servers">string array of servers to retrieve stats from, or all if this is null</param>
 		/// <returns>Stats map</returns>
-		public Hashtable Stats(string[] servers) 
+		public Hashtable Stats(ArrayList servers) 
 		{
 
 			// get SockIOPool instance
-			SockIOPool pool = SockIOPool.getInstance( poolName );
+			SockIOPool pool = SockIOPool.GetInstance(_poolName);
 
 			// return false if unable to get SockIO obj
-			if (pool == null) 
+			if(pool == null) 
 			{
-				log.Error("++++ unable to get SockIOPool instance");
+				log.Error(GetLocalizedString("unable to get socket pool"));
 				return null;
 			}
 
 			// get all servers and iterate over them
-			servers = (servers == null)
-				? pool.Servers
-				: servers;
+            if (servers == null)
+                servers = pool.Servers;
 
 			// if no servers, then return early
-			if (servers == null || servers.Length <= 0) 
+			if(servers == null || servers.Count <= 0) 
 			{
-				log.Error("++++ no servers to check stats");
+				log.Error(GetLocalizedString("stats no servers"));
 				return null;
 			}
 
 			// array of stats Hashtables
 			Hashtable statsMaps = new Hashtable();
 
-			for (int i = 0; i < servers.Length; i++) 
+			for(int i = 0; i < servers.Count; i++) 
 			{
 
-				SockIOPool.SockIO sock = pool.getConnection(servers[i]);
-				if (sock == null) 
+				SockIO sock = pool.GetConnection((string)servers[i]);
+				if(sock == null) 
 				{
-					log.Error("++++ unable to get connection to : " + servers[i]);
+					log.Error(GetLocalizedString("unable to connect").Replace("$$Server$$", servers[i].ToString()));
 					continue;
 				}
 
@@ -1521,63 +1509,67 @@ namespace MemCached.clientlib
 
 				try 
 				{
-					sock.Write(UTF8Encoding.UTF8.GetBytes( command ));
+					sock.Write(UTF8Encoding.UTF8.GetBytes(command));
 					sock.Flush();
 
 					// map to hold key value pairs
 					Hashtable stats = new Hashtable();
 
 					// loop over results
-					while (true) 
+					while(true) 
 					{
 						string line = sock.ReadLine();
-						log.Debug("++++ line: " + line);
+						log.Debug(GetLocalizedString("stats line").Replace("$$Line$$", line));
 
-						if (line.StartsWith(STATS)) 
+						if(line.StartsWith(STATS)) 
 						{
 							string[] info = line.Split(' ');
 							string key    = info[1];
 							string val  = info[2];
 
-							log.Debug("++++ key  : " + key);
-							log.Debug("++++ value: " + val);
+							log.Debug(GetLocalizedString("stats success").Replace("$$Key$$", key).Replace("$$Value$$", val));
 
 							stats[ key ] = val;
 
 						}
-						else if (END == line) 
+						else if(END == line) 
 						{
 							// finish when we get end from server
-							log.Debug("++++ finished reading from cache server");
+							log.Debug(GetLocalizedString("stats finished"));
 							break;
 						}
 
 						statsMaps[ servers[i] ] = stats;
 					}
 				}
-				catch (IOException e) 
+				catch(IOException e) 
 				{
 					// exception thrown
-					log.Error("++++ exception thrown while writing bytes to server on delete");
-					log.Error(e.ToString(), e);
+                    log.Error(GetLocalizedString("stats IOException"), e);
 
 					try 
 					{
 						sock.TrueClose();
 					}
-					catch (IOException) 
+					catch(IOException) 
 					{
-						log.Error("++++ failed to close socket : " + sock.ToString());
+						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()));
 					}
 
 					sock = null;
 				}
 
-				if (sock != null)
+				if(sock != null)
 					sock.Close();
 			}
 
 			return statsMaps;
+		}
+
+		private static ResourceManager _resourceManager = new ResourceManager("StringMessages", typeof(MemcachedClient).Assembly);
+		private static string GetLocalizedString(string key)
+		{
+			return _resourceManager.GetString(key);
 		}
 	}
 }

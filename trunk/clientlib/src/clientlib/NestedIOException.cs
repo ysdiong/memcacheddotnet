@@ -24,7 +24,7 @@
 /// @author Tim Gebhardt <tim@gebhardtcomputing.com> 
 /// @version 1.0
 **/
-namespace MemCached.clientlib
+namespace MemCached.ClientLibrary
 {
 	using System;
 	using System.IO;
@@ -37,22 +37,27 @@ namespace MemCached.clientlib
 	{
 		Exception _innerException;
 
+		public NestedIOException()
+		{
+
+		}
+
 		/// <summary>
 		/// Create a new <c>NestedIOException</c> instance.
 		/// </summary>
 		/// <param name="cause">The inner exception</param>
-		public NestedIOException( Exception inner )
+		public NestedIOException(Exception ex)
 		{
-			_innerException = inner;
+			_innerException = ex;
 		}
 
-		public NestedIOException( string message, Exception inner ) 
+		public NestedIOException(string message, Exception ex) 
 			:base(message)
 		{
-			_innerException = inner;
+			_innerException = ex;
 		}
 
-		public override System.Exception GetBaseException()
+		public override Exception GetBaseException()
 		{
 			return _innerException;
 		}

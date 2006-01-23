@@ -7,8 +7,8 @@
     <ProjectGuid>{4770D032-9B06-450D-8B00-7200D8330397}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>clientlib</RootNamespace>
-    <AssemblyName>MemCachedDOTNet.ClientLib</AssemblyName>
+    <RootNamespace>Memcached.ClientLibrary</RootNamespace>
+    <AssemblyName>Memcached.ClientLibrary</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -48,10 +48,9 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="CRCTool.cs" />
     <Compile Include="IterIsolate.cs" />
-    <Compile Include="Logger.cs" />
     <Compile Include="MemCachedClient.cs" />
     <Compile Include="NativeHandler.cs" />
-    <Compile Include="NestedIOException.cs" />
+    <Compile Include="SockIO.cs" />
     <Compile Include="SockIOPool.cs" />
   </ItemGroup>
   <ItemGroup>

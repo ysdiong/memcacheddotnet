@@ -7,8 +7,8 @@
     <ProjectGuid>{C11EA287-39A0-4752-B78E-9CF1E38177AF}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MemCachedTest</RootNamespace>
-    <AssemblyName>MemCachedTest</AssemblyName>
+    <RootNamespace>Memcached.MemcachedTest</RootNamespace>
+    <AssemblyName>MemcachedTest</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

@@ -1,12 +1,12 @@
 /**
- * MemCachedBench.cs
+ * MemcachedBench.cs
  *
  * Copyright (c) 2005
  * Tim Gebhardt <tim@gebhardtcomputing.com>
  * 
  * Based off of code written by
  * Greg Whalin <greg@meetup.com>
- * for his Java MemCached client:
+ * for his Java Memcached client:
  * http://www.whalin.com/memcached/
  * 
  *
@@ -35,14 +35,14 @@
  * @author Tim Gebhardt<tim@gebhardtcomputing.com> 
  * @version 1.0
  */
-namespace MemCached.MemCachedBench
+namespace Memcached.MemcachedBench
 {
 	using System;
 	using System.Collections;
 
-	using MemCached.clientlib;
+	using Memcached.ClientLibrary;
 
-	public class MemCachedBench 
+	public class MemcachedBench 
 	{
 		/// <summary>
 		/// Arguments: 
@@ -64,8 +64,8 @@ namespace MemCached.MemCachedBench
 			string[] serverlist = { "140.192.34.72:11211", "140.192.34.73:11211" };
 
 			// initialize the pool for memcache servers
-			SockIOPool pool = SockIOPool.getInstance();
-			pool.Servers = serverlist;
+			SockIOPool pool = SockIOPool.GetInstance();
+			pool.SetServers(serverlist);
 
 			pool.InitConnections = 100;
 			pool.MinConnections = 100;
@@ -80,7 +80,7 @@ namespace MemCached.MemCachedBench
 			pool.Failover = true;
 
 			pool.Nagle = false;
-			pool.initialize();
+			pool.Initialize();
 
 			// initialize the pool for memcache servers
 //			SockIOPool pool = SockIOPool.Instance;
@@ -97,10 +97,10 @@ namespace MemCached.MemCachedBench
 
 //
 //			// get client instance
-			MemCachedClient mc = new MemCachedClient();
+			MemcachedClient mc = new MemcachedClient();
 			mc.EnableCompression = false;
 
-//			MemCachedClient mc = new MemCachedClient();
+//			MemcachedClient mc = new MemcachedClient();
 //			mc.CompressEnable = false;
 //			mc.CompressThreshold = 0;
 //			mc.Serialize = true;
@@ -109,7 +109,7 @@ namespace MemCached.MemCachedBench
 			string obj = "This is a test of an object blah blah es, serialization does not seem to slow things down so much.  The gzip compression is horrible horrible performance, so we only use it for very large objects.  I have not done any heavy benchmarking recently";
 
 			long begin = DateTime.Now.Ticks;
-			for (int i = start; i < start+runs; i++) 
+			for(int i = start; i < start+runs; i++) 
 			{
 				mc.Set(keyBase + i, obj);
 			}
@@ -121,7 +121,7 @@ namespace MemCached.MemCachedBench
 			begin = DateTime.Now.Ticks;
 			int hits = 0;
 			int misses = 0;
-			for (int i = start; i < start+runs; i++) 
+			for(int i = start; i < start+runs; i++) 
 			{
 				string str = (string) mc.Get(keyBase + i);
 				if(str != null)
@@ -148,7 +148,7 @@ namespace MemCached.MemCachedBench
 				Console.WriteLine();
 			}
 
-			SockIOPool.getInstance().shutDown();
+			SockIOPool.GetInstance().Shutdown();
 
 			//SockIOPool.Instance.ShutDown();
 		}

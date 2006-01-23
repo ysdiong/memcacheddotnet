@@ -9,7 +9,7 @@
             <Settings
                 ApplicationIcon = ""
                 AssemblyKeyContainerName = ""
-                AssemblyName = "clientlib"
+                AssemblyName = "Memcached.ClientLibrary"
                 AssemblyOriginatorKeyFile = ""
                 DefaultClientScript = "JScript"
                 DefaultHTMLPageLayout = "Grid"
@@ -18,7 +18,7 @@
                 OutputType = "Library"
                 PreBuildEvent = ""
                 PostBuildEvent = ""
-                RootNamespace = "clientlib"
+                RootNamespace = "Memcached.ClientLibrary"
                 RunPostBuildEvent = "OnBuildSuccess"
                 StartupObject = ""
             >
@@ -114,11 +114,6 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "Logger.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
                     RelPath = "MemCachedClient.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -134,7 +129,7 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "NestedIOException.cs"
+                    RelPath = "SockIO.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
@@ -142,6 +137,10 @@
                     RelPath = "SockIOPool.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "StringMessages.resx"
+                    BuildAction = "EmbeddedResource"
                 />
             </Include>
         </Files>
