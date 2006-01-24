@@ -54,6 +54,11 @@
     <Compile Include="SockIOPool.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="StringMessages.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
