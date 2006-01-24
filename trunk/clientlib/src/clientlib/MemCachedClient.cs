@@ -402,7 +402,7 @@ namespace Memcached.ClientLibrary
 		/// <returns></returns>
 		private static int GetExpirationTime(DateTime expiration)
 		{
-			if(expiration <= new DateTime(1970, 1, 1))
+			if(expiration <= DateTime.Now)
 				return 0;
 
 			TimeSpan thirtyDays = new TimeSpan(29, 23, 59, 59);
@@ -577,6 +577,8 @@ namespace Memcached.ClientLibrary
 		/// <returns>true/false indicating success</returns>
 		private bool Set(string cmdname, string key, object obj, DateTime expiry, object hashCode, bool asString) 
 		{
+			if(expiry < DateTime.Now)
+				return true;
 
 			if(cmdname == null || cmdname.Trim().Length == 0 || key == null || key.Length == 0) 
 			{
@@ -615,7 +617,7 @@ namespace Memcached.ClientLibrary
                         }
                         catch(ArgumentException ex)
                         {
-                            log.Error(GetLocalizedString("set invalid encoding type").Replace("$$Encoding$$", _defaultEncoding), ex);
+                            log.Error(GetLocalizedString("set invalid encoding").Replace("$$Encoding$$", _defaultEncoding), ex);
                             sock.Close();
                             sock = null;
                             return false;

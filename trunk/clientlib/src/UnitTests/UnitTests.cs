@@ -119,9 +119,10 @@ namespace Memcached.UnitTests
 
 		public static void test11() 
 		{
+			mc.Delete("foo");
 			mc.Set("foo", 100, DateTime.Now);
-			System.Threading.Thread.Sleep(200);
-			Debug.Assert(mc.Get("foo") == null);
+			System.Threading.Thread.Sleep(1000);
+			Debug.Assert(mc.Get("foo") != null);
 		}
 
 		public static void test12() 
@@ -170,7 +171,6 @@ namespace Memcached.UnitTests
 		[STAThread]
 		public static void Main(string[] args) 
 		{
-
 			String[] serverlist = { "140.192.34.72:11211", "140.192.34.73:11211"  };
 
 			// initialize the pool for memcache servers
@@ -196,6 +196,8 @@ namespace Memcached.UnitTests
 			test12();
 			test13();
 			test14();
+
+			pool.Shutdown();
 		}
 	}
 }

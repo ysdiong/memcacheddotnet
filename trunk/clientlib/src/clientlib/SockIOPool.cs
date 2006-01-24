@@ -151,7 +151,7 @@ namespace Memcached.ClientLibrary
         private long _maxBusyTime = 1000 * 60 * 5; // max idle time for avail sockets (in milliseconds)
         private long _maintThreadSleep = 1000 * 5; // maintenance thread sleep time (in milliseconds)
         private int _socketTimeout = 1000 * 10; // default timeout of socket reads
-        private int _socketConnectTimeout = 5; // default timeout of socket connections
+        private int _socketConnectTimeout = 50; // default timeout of socket connections
         private bool _failover = true; // default to failover in event of cache server dead
         private bool _nagle = true; // enable/disable Nagle's algorithm
         private HashingAlgorithm _hashingAlgorithm = HashingAlgorithm.Native; // default to using the native hash as it is the fastest
