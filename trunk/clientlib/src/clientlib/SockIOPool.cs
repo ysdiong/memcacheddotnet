@@ -574,7 +574,7 @@ namespace Memcached.ClientLibrary
             {
                 DateTime now = DateTime.Now;
                 _hostDead[host] = now;
-                long expire = (_hostDeadDuration.ContainsKey(host)) ? (((long)_hostDeadDuration[host]) * 2) : 1000;
+                long expire = (_hostDeadDuration.ContainsKey(host)) ? (((long)_hostDeadDuration[host]) * 2) : 100;
                 _hostDeadDuration[host] = expire;
                 Log.Debug(GetLocalizedString("ignoring dead host").Replace("$$Host$$", host).Replace("$$Expire$$", expire.ToString(new NumberFormatInfo())));
 
@@ -845,7 +845,7 @@ namespace Memcached.ClientLibrary
                 return; 
 
             Hashtable sockets;
-            if (host != null && host.Length == 0 && pool.ContainsKey(host))
+            if (host != null && host.Length != 0 && pool.ContainsKey(host))
             {
                 sockets = (Hashtable)pool[host];
                 if (sockets != null)
@@ -1073,7 +1073,7 @@ namespace Memcached.ClientLibrary
 
             // go through avail sockets and create/destroy sockets
             // as needed to maintain pool settings
-            foreach(string host in _availPool.Keys)
+            foreach(string host in new IteratorIsolateCollection(_availPool.Keys))
             {
                 Hashtable sockets = (Hashtable)_availPool[host];
                 Log.Debug(GetLocalizedString("size of available pool").Replace("$$Host$$", host).Replace("$$Sockets$$", sockets.Count.ToString(new NumberFormatInfo())));
@@ -1083,7 +1083,7 @@ namespace Memcached.ClientLibrary
                 {
                     // need to create new sockets
                     int need = _minConns - sockets.Count;
-                    Log.Debug(GetLocalizedString("need to create new sockets").Replace("$$Need$$", need.ToString(new NumberFormatInfo()).Replace("$$Host$$", host)));
+                    Log.Debug(GetLocalizedString("need to create new sockets").Replace("$$Need$$", need.ToString(new NumberFormatInfo())).Replace("$$Host$$", host));
 
                     for(int j = 0; j < need; j++)
                     {
