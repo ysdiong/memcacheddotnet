@@ -67,14 +67,12 @@ namespace Memcached.MemcachedBench
 			SockIOPool pool = SockIOPool.GetInstance();
 			pool.SetServers(serverlist);
 
-			pool.InitConnections = 100;
-			pool.MinConnections = 100;
-			pool.MaxConnections = 500;
-			pool.InitConnections = 1;
-			pool.MinConnections = 1;
-			pool.MaxConnections = 2;
+			pool.InitConnections = 3;
+			pool.MinConnections = 3;
+			pool.MaxConnections = 5;
 
 			pool.SocketConnectTimeout = 1000;
+            pool.SocketTimeout = 3000;
 
 			pool.MaintenanceSleep = 30;
 			pool.Failover = true;
@@ -149,8 +147,6 @@ namespace Memcached.MemcachedBench
 			}
 
 			SockIOPool.GetInstance().Shutdown();
-
-			//SockIOPool.Instance.ShutDown();
 		}
 	}
 }

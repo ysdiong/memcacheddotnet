@@ -143,10 +143,6 @@
                <Item>'p'</Item>
                <Item>CRCTool.CalcCRCITT(Byte[]):UInt16</Item>
               </Issue>
-              <Issue>
-               <Item>'p'</Item>
-               <Item>CRCTool.CalcCRCITT(Byte[]):UInt16</Item>
-              </Issue>
               <Notes>
                <User Name="tgebhar">
                 <Note Id="0" />
@@ -198,6 +194,10 @@
                <Item>'p'</Item>
                <Item>CRCTool.crcbitbybit(Byte[]):UInt64</Item>
               </Issue>
+              <Issue>
+               <Item>'p'</Item>
+               <Item>CRCTool.crcbitbybit(Byte[]):UInt64</Item>
+              </Issue>
               <Notes>
                <User Name="tgebhar">
                 <Note Id="0" />
@@ -241,10 +241,6 @@
               </Notes>
              </Message>
              <Message TypeName="ValidateArgumentsOfPublicMethods" Category="Microsoft.Design" CheckId="CA1062" Status="Excluded" Created="2006-01-23 16:31:26Z">
-              <Issue>
-               <Item>'p'</Item>
-               <Item>CRCTool.crcbitbybitfast(Byte[]):UInt64</Item>
-              </Issue>
               <Issue>
                <Item>'p'</Item>
                <Item>CRCTool.crcbitbybitfast(Byte[]):UInt64</Item>
@@ -449,6 +445,50 @@
            </Member>
           </Members>
          </Type>
+         <Type Name="SockIO">
+          <Messages>
+           <Message TypeName="TypesThatOwnDisposableFieldsShouldBeDisposable" Category="Microsoft.Design" CheckId="CA1001" Created="2006-03-31 21:30:33Z" FixCategory="Breaking">
+            <Issue>
+             <Item>Memcached.ClientLibrary.SockIO</Item>
+             <Item>System.IO.BufferedStream, System.Net.Sockets.Socket</Item>
+            </Issue>
+           </Message>
+          </Messages>
+          <Members>
+           <Member Name=".ctor(Memcached.ClientLibrary.SockIOPool,System.String,System.Int32,System.Int32,System.Boolean)">
+            <Messages>
+             <Message Id="noDelay" TypeName="ReviewUnusedParameters" Category="Microsoft.Usage" CheckId="CA1801" Created="2006-03-31 21:30:33Z" FixCategory="Breaking">
+              <Issue>
+               <Item>noDelay</Item>
+               <Item>SockIO.SockIO(SockIOPool, String, Int32, Int32, Boolean)</Item>
+              </Issue>
+             </Message>
+             <Message Id="timeout" TypeName="ReviewUnusedParameters" Category="Microsoft.Usage" CheckId="CA1801" Created="2006-03-31 21:30:33Z" FixCategory="Breaking">
+              <Issue>
+               <Item>timeout</Item>
+               <Item>SockIO.SockIO(SockIOPool, String, Int32, Int32, Boolean)</Item>
+              </Issue>
+             </Message>
+            </Messages>
+           </Member>
+           <Member Name=".ctor(Memcached.ClientLibrary.SockIOPool,System.String,System.Int32,System.Int32,System.Int32,System.Boolean)">
+            <Messages>
+             <Message Id="noDelay" TypeName="ReviewUnusedParameters" Category="Microsoft.Usage" CheckId="CA1801" Created="2006-03-31 21:30:33Z" FixCategory="Breaking">
+              <Issue>
+               <Item>noDelay</Item>
+               <Item>SockIO.SockIO(SockIOPool, String, Int32, Int32, Int32, Boolean)</Item>
+              </Issue>
+             </Message>
+             <Message Id="timeout" TypeName="ReviewUnusedParameters" Category="Microsoft.Usage" CheckId="CA1801" Created="2006-03-31 21:30:33Z" FixCategory="Breaking">
+              <Issue>
+               <Item>timeout</Item>
+               <Item>SockIO.SockIO(SockIOPool, String, Int32, Int32, Int32, Boolean)</Item>
+              </Issue>
+             </Message>
+            </Messages>
+           </Member>
+          </Members>
+         </Type>
          <Type Name="SockIOPool+MaintenanceThread">
           <Members>
            <Member Name="Interval">
@@ -533,6 +573,12 @@
    </Rule>
    <Rule TypeName="MarkMembersAsStatic" Category="Microsoft.Performance" CheckId="CA1822">
     <Resolution Name="Default">The 'this' parameter (or 'Me' in VB) of {0} is never used. Mark the member as static (or Shared in VB) or use 'this'/'Me' in the method body or at least one property accessor, if appropriate.</Resolution>
+   </Rule>
+   <Rule TypeName="ReviewUnusedParameters" Category="Microsoft.Usage" CheckId="CA1801">
+    <Resolution Name="Default">Parameter '{0}' of {1} is never used. Remove the parameter or use it in the method body.</Resolution>
+   </Rule>
+   <Rule TypeName="TypesThatOwnDisposableFieldsShouldBeDisposable" Category="Microsoft.Design" CheckId="CA1001">
+    <Resolution Name="Default">Implement IDisposable on '{0}' as it instantiates members of the following IDisposable types: {1}</Resolution>
    </Rule>
    <Rule TypeName="ValidateArgumentsOfPublicMethods" Category="Microsoft.Design" CheckId="CA1062">
     <Resolution Name="Default">Validate parameter {0} passed to externally visible method {1}.</Resolution>

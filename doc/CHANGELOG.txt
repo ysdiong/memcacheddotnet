@@ -36,3 +36,13 @@
    -Removed the NestedIOException class because the .NET IOException class
             can do inner exceptions.
    -Split off SockIO class into it's own source file.
+   
+31 March 2006 (TG)
+   -Bugfix.  There were problems where the busy and available pools were
+	     continually being created over and over again.  This has been
+	     fixed and not only does this solve a very subtle outstanding
+	     bug, but it also results in a massive performance increase!
+   -Bugfix.  Fixed the code where we treat the input and output stream
+	     of a SockIO object as two different objects when .NET just
+	     treats them as a single object.  This was a hold-over from 
+	     java.
