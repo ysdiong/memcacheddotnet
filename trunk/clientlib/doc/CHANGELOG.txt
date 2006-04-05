@@ -46,3 +46,19 @@
 	     of a SockIO object as two different objects when .NET just
 	     treats them as a single object.  This was a hold-over from 
 	     java.
+
+5 April 2006 (TG)
+   -Performance. Turns out that the thorough (sp?) logging throughout the
+		 library was part of its performance downfall :).  There
+		 was a lot of string concatenation and hashtable lookups,
+		 which by themselve don't really do much.  However, if you
+		 Do 100,000 hashtable lookups (because all the messages
+		 are internationalized), and 50,000 string concatenations
+		 it starts to all add up.  I wrapped every logging statement
+		 with a boolean lookup on log4net which can check to see
+		 if we're even going to log the message, and if not, don't
+		 even do the work involved in logging.  If you turn off 
+		 logging, or turn it up to some high level like "WARN" or 
+		 "ERROR", then you will see a pretty significant performance
+		 benefit, CPU usage down significantly, and network usage
+		 up significantly.

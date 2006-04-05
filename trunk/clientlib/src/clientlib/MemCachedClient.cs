@@ -329,7 +329,10 @@ namespace Memcached.ClientLibrary
 		{
 			if(key == null) 
 			{
-				log.Error(GetLocalizedString("null key delete"));
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("null key delete"));
+				}
 				return false;
 			}
 
@@ -356,7 +359,10 @@ namespace Memcached.ClientLibrary
 				string line = sock.ReadLine();
 				if(DELETED == line) 
 				{
-					log.Info(GetLocalizedString("delete success").Replace("$$Key$$", key));
+					if(log.IsInfoEnabled)
+					{
+						log.Info(GetLocalizedString("delete success").Replace("$$Key$$", key));
+					}
 
 					// return sock to pool and bail here
 					sock.Close();
@@ -365,17 +371,26 @@ namespace Memcached.ClientLibrary
 				}
 				else if(NOTFOUND == line) 
 				{
-					log.Info(GetLocalizedString("delete key not found").Replace("$$Key$$", key));
+					if(log.IsInfoEnabled)
+					{
+						log.Info(GetLocalizedString("delete key not found").Replace("$$Key$$", key));
+					}
 				}
 				else 
 				{
-					log.Error(GetLocalizedString("delete key error").Replace("$$Key$$", key).Replace("$$Line$$", line));
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("delete key error").Replace("$$Key$$", key).Replace("$$Line$$", line));
+					}
 				}
 			}
 			catch(IOException e) 
 			{
-				// exception thrown
-                log.Error(GetLocalizedString("delete IOException"), e);
+				if(log.IsErrorEnabled)
+				{
+					// exception thrown
+					log.Error(GetLocalizedString("delete IOException"), e);
+				}
 
 				try 
 				{
@@ -383,7 +398,10 @@ namespace Memcached.ClientLibrary
 				}
 				catch(IOException ioe) 
 				{
-					log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+					}
 				}
 
 				sock = null;
@@ -582,7 +600,10 @@ namespace Memcached.ClientLibrary
 
 			if(cmdname == null || cmdname.Trim().Length == 0 || key == null || key.Length == 0) 
 			{
-				log.Error(GetLocalizedString("set key null"));
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("set key null"));
+				}
 				return false;
 			}
 
@@ -601,23 +622,28 @@ namespace Memcached.ClientLibrary
 			// byte array to hold data
 			byte[] val;
 
+			// useful for sharing data between .NET and non-.NET
+            // and also for storing ints for the increment method
 			if(NativeHandler.IsHandled(obj)) 
 			{
-			
 				if(asString) 
 				{
                     if(obj != null)
                     {
-                        // useful for sharing data between java and non-java
-                        // and also for storing ints for the increment method
-                        log.Info(GetLocalizedString("set store data as string").Replace("$$Key$$", key).Replace("$$Class$$", obj.GetType().Name));
+						if(log.IsInfoEnabled)
+						{
+							log.Info(GetLocalizedString("set store data as string").Replace("$$Key$$", key).Replace("$$Class$$", obj.GetType().Name));
+						}
                         try
                         {
                             val = UTF8Encoding.UTF8.GetBytes(obj.ToString());
                         }
                         catch(ArgumentException ex)
                         {
-                            log.Error(GetLocalizedString("set invalid encoding").Replace("$$Encoding$$", _defaultEncoding), ex);
+							if(log.IsErrorEnabled)
+							{
+								log.Error(GetLocalizedString("set invalid encoding").Replace("$$Encoding$$", _defaultEncoding), ex);
+							}
                             sock.Close();
                             sock = null;
                             return false;
@@ -630,7 +656,10 @@ namespace Memcached.ClientLibrary
 				}
 				else 
 				{
-					log.Info(GetLocalizedString("set store with native handler"));
+					if(log.IsInfoEnabled)
+					{
+						log.Info(GetLocalizedString("set store with native handler"));
+					}
 
 					try 
 					{
@@ -638,7 +667,10 @@ namespace Memcached.ClientLibrary
 					}
 					catch(ArgumentException e) 
 					{
-						log.Error(GetLocalizedString("set failed to native handle object"), e);
+						if(log.IsErrorEnabled)
+						{
+							log.Error(GetLocalizedString("set failed to native handle object"), e);
+						}
 
 						sock.Close();
 						sock = null;
@@ -650,9 +682,13 @@ namespace Memcached.ClientLibrary
 			{
                 if(obj != null)
                 {
+					if(log.IsInfoEnabled)
+					{
+						log.Info(GetLocalizedString("set serializing".Replace("$$Key$$", key).Replace("$$Class$$", obj.GetType().Name)));
+					}
+
                     // always serialize for non-primitive types
-                    log.Info(GetLocalizedString("set serializing".Replace("$$Key$$", key).Replace("$$Class$$", obj.GetType().Name)));
-                    try
+					try
                     {
                         MemoryStream memStream = new MemoryStream();
                         new BinaryFormatter().Serialize(memStream, obj);
@@ -663,7 +699,10 @@ namespace Memcached.ClientLibrary
                     {
                         // if we fail to serialize, then
                         // we bail
-                        log.Error(GetLocalizedString("set failed to serialize").Replace("$$Object$$", obj.ToString()), e);
+						if(log.IsErrorEnabled)
+						{
+							log.Error(GetLocalizedString("set failed to serialize").Replace("$$Object$$", obj.ToString()), e);
+						}
 
                         // return socket to pool and bail
                         sock.Close();
@@ -681,8 +720,11 @@ namespace Memcached.ClientLibrary
 			// and if the length is over the threshold 
 			if(_compressEnable && val.Length > _compressThreshold) 
 			{
-				log.Info(GetLocalizedString("set trying to compress data"));
-				log.Info(GetLocalizedString("set size prior").Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())));
+				if(log.IsInfoEnabled)
+				{
+					log.Info(GetLocalizedString("set trying to compress data"));
+					log.Info(GetLocalizedString("set size prior").Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())));
+				}
 
 				try 
 				{
@@ -695,11 +737,17 @@ namespace Memcached.ClientLibrary
 					val = memoryStream.GetBuffer();
 					flags |= F_COMPRESSED;
 
-					log.Info(GetLocalizedString("set compression success").Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())));
+					if(log.IsInfoEnabled)
+					{
+						log.Info(GetLocalizedString("set compression success").Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())));
+					}
 				}
 				catch(IOException e) 
 				{
-					log.Error(GetLocalizedString("set compression failure"), e);
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("set compression failure"), e);
+					}
 				}
 			}
 
@@ -715,28 +763,43 @@ namespace Memcached.ClientLibrary
 
 				// get result code
 				string line = sock.ReadLine();
-				log.Info(GetLocalizedString("set memcached command result").Replace("$$Cmd$$", cmd).Replace("$$Line$$", line));
+				if(log.IsInfoEnabled)
+				{
+					log.Info(GetLocalizedString("set memcached command result").Replace("$$Cmd$$", cmd).Replace("$$Line$$", line));
+				}
 
 				if(STORED == line) 
 				{
-					log.Info(GetLocalizedString("set success").Replace("$$Key$$", key));
+					if(log.IsInfoEnabled)
+					{
+						log.Info(GetLocalizedString("set success").Replace("$$Key$$", key));
+					}
 					sock.Close();
 					sock = null;
 					return true;
 				}
 				else if(NOTSTORED == line) 
 				{
-					log.Info(GetLocalizedString("set not stored").Replace("$$Key$$", key));
+					if(log.IsInfoEnabled)
+					{
+						log.Info(GetLocalizedString("set not stored").Replace("$$Key$$", key));
+					}
 				}
 				else 
 				{
-					log.Error(GetLocalizedString("set error").Replace("$$Key$$", key).Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())).Replace("$$Line$$", line));
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("set error").Replace("$$Key$$", key).Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())).Replace("$$Line$$", line));
+					}
 				}
 			}
 			catch(IOException e) 
 			{
 				// exception thrown
-				log.Error(GetLocalizedString("set IOException"), e);
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("set IOException"), e);
+				}
 
 				try 
 				{
@@ -744,7 +807,10 @@ namespace Memcached.ClientLibrary
 				}
 				catch(IOException ioe) 
 				{
-					log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+					}
 				}
 
 				sock = null;
@@ -797,10 +863,12 @@ namespace Memcached.ClientLibrary
 		/// <returns>counter value or -1 if not found</returns>
 		public long GetCounter(string key, object hashCode) 
 		{
-
 			if(key == null) 
 			{
-				log.Error(GetLocalizedString("getcounter null key"));
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("getcounter null key"));
+				}
 				return -1;
 			}
 
@@ -812,7 +880,10 @@ namespace Memcached.ClientLibrary
 			catch(ArgumentException) 
 			{
 				// not found or error getting out
-				log.Error(GetLocalizedString("getcounter counter not found").Replace("$$Key$$", key));
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("getcounter counter not found").Replace("$$Key$$", key));
+				}
 			}
 		
 			return counter;
@@ -912,7 +983,10 @@ namespace Memcached.ClientLibrary
 			try 
 			{
 				string cmd = cmdname + " " + key + " " + inc + "\r\n";
-				log.Debug(GetLocalizedString("incr-decr command").Replace("$$Cmd$$", cmd));
+				if(log.IsDebugEnabled)
+				{
+					log.Debug(GetLocalizedString("incr-decr command").Replace("$$Cmd$$", cmd));
+				}
 
 				sock.Write(UTF8Encoding.UTF8.GetBytes(cmd));
 				sock.Flush();
@@ -930,18 +1004,26 @@ namespace Memcached.ClientLibrary
 				} 
 				else if(NOTFOUND == line) 
 				{
-					log.Info(GetLocalizedString("incr-decr key not found").Replace("$$Key$$", key));
-
+					if(log.IsInfoEnabled)
+					{
+						log.Info(GetLocalizedString("incr-decr key not found").Replace("$$Key$$", key));
+					}
 				} 
 				else 
 				{
-					log.Error(GetLocalizedString("incr-decr key error").Replace("$$Key$$", key));
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("incr-decr key error").Replace("$$Key$$", key));
+					}
 				}
 			}
 			catch(IOException e) 
 			{
 				// exception thrown
-				log.Error(GetLocalizedString("incr-decr IOException"), e);
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("incr-decr IOException"), e);
+				}
 
 				try 
 				{
@@ -949,7 +1031,10 @@ namespace Memcached.ClientLibrary
 				}
 				catch(IOException) 
 				{
-					log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()));
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()));
+					}
 				}
 
 				sock = null;
@@ -1018,7 +1103,10 @@ namespace Memcached.ClientLibrary
 			try 
 			{
 				string cmd = "get " + key + "\r\n";
-				log.Debug(GetLocalizedString("get memcached command").Replace("$$Cmd$$", cmd));
+				if(log.IsDebugEnabled)
+				{
+					log.Debug(GetLocalizedString("get memcached command").Replace("$$Cmd$$", cmd));
+				}
 
 				sock.Write(UTF8Encoding.UTF8.GetBytes(cmd));
 				sock.Flush();
@@ -1028,8 +1116,11 @@ namespace Memcached.ClientLibrary
 				Hashtable hm = new Hashtable();
 				LoadItems(sock, hm, asString);
 
-				// debug code
-				log.Debug(GetLocalizedString("get memcached result").Replace("$$Results$$", hm.Count.ToString(new NumberFormatInfo())));
+				if(log.IsDebugEnabled)
+				{
+					// debug code
+					log.Debug(GetLocalizedString("get memcached result").Replace("$$Results$$", hm.Count.ToString(new NumberFormatInfo())));
+				}
 
 				// return the value for this key if we found it
 				// else return null 
@@ -1040,7 +1131,10 @@ namespace Memcached.ClientLibrary
 			catch(IOException e) 
 			{
 				// exception thrown
-				log.Error(GetLocalizedString("get IOException").Replace("$$Key$$", key), e);
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("get IOException").Replace("$$Key$$", key), e);
+				}
 
 				try 
 				{
@@ -1048,7 +1142,10 @@ namespace Memcached.ClientLibrary
 				}
 				catch(IOException ioe) 
 				{
-					log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+					}
 				}
 				sock = null;
 			}
@@ -1190,7 +1287,10 @@ namespace Memcached.ClientLibrary
 				sock.Close();
 			}
 		
-			log.Info(GetLocalizedString("getmultiple socket count").Replace("$$Sockets$$", sockKeys.Count.ToString(new NumberFormatInfo())));
+			if(log.IsInfoEnabled)
+			{
+				log.Info(GetLocalizedString("getmultiple socket count").Replace("$$Sockets$$", sockKeys.Count.ToString(new NumberFormatInfo())));
+			}
 
 			// now query memcache
 			Hashtable ret = new Hashtable();
@@ -1203,7 +1303,10 @@ namespace Memcached.ClientLibrary
 				try 
 				{
 					string cmd = "get" + (StringBuilder) sockKeys[ host ] + "\r\n";
-					log.Debug(GetLocalizedString("getmultiple memcached command").Replace("$$Cmd$$", cmd));
+					if(log.IsDebugEnabled)
+					{
+						log.Debug(GetLocalizedString("getmultiple memcached command").Replace("$$Cmd$$", cmd));
+					}
 					sock.Write(UTF8Encoding.UTF8.GetBytes(cmd));
 					sock.Flush();
 					LoadItems(sock, ret, asString);
@@ -1211,7 +1314,10 @@ namespace Memcached.ClientLibrary
 				catch(IOException e) 
 				{
 					// exception thrown
-					log.Error(GetLocalizedString("getmultiple IOException"), e);
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("getmultiple IOException"), e);
+					}
 
 					// clear this sockIO obj from the list
 					// and from the map containing keys
@@ -1222,7 +1328,10 @@ namespace Memcached.ClientLibrary
 					}
 					catch(IOException ioe) 
 					{
-						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+						if(log.IsErrorEnabled)
+						{
+							log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+						}
 					}
 					sock = null;
 				}
@@ -1237,7 +1346,10 @@ namespace Memcached.ClientLibrary
 				sockKeys.Remove(host);
 			}
 			
-			log.Debug(GetLocalizedString("getmultiple results").Replace("$$Results$$", ret.Count.ToString(new NumberFormatInfo())));
+			if(log.IsDebugEnabled)
+			{
+				log.Debug(GetLocalizedString("getmultiple results").Replace("$$Results$$", ret.Count.ToString(new NumberFormatInfo())));
+			}
 			return ret;
 		}
     
@@ -1255,7 +1367,10 @@ namespace Memcached.ClientLibrary
 			while(true) 
 			{
 				string line = sock.ReadLine();
-				log.Debug(GetLocalizedString("loaditems line").Replace("$$Line$$", line));
+				if(log.IsDebugEnabled)
+				{
+					log.Debug(GetLocalizedString("loaditems line").Replace("$$Line$$", line));
+				}
 
 				if(line.StartsWith(VALUE)) 
 				{
@@ -1264,7 +1379,10 @@ namespace Memcached.ClientLibrary
 					int flag      = int.Parse(info[2], new NumberFormatInfo());
 					int length    = int.Parse(info[3], new NumberFormatInfo());
 
-					log.Debug(GetLocalizedString("loaditems header").Replace("$$Key$$", key).Replace("$$Flags$$", flag.ToString(new NumberFormatInfo())).Replace("$$Length$$", length.ToString(new NumberFormatInfo())));
+					if(log.IsDebugEnabled)
+					{
+						log.Debug(GetLocalizedString("loaditems header").Replace("$$Key$$", key).Replace("$$Flags$$", flag.ToString(new NumberFormatInfo())).Replace("$$Length$$", length.ToString(new NumberFormatInfo())));
+					}
 				
 					// read obj into buffer
 					byte[] buf = new byte[length];
@@ -1298,7 +1416,10 @@ namespace Memcached.ClientLibrary
 						}
 						catch(IOException e) 
 						{
-                            log.Error(GetLocalizedString("loaditems uncompression IOException").Replace("$$Key$$", key), e);
+							if(log.IsErrorEnabled)
+							{
+								log.Error(GetLocalizedString("loaditems uncompression IOException").Replace("$$Key$$", key), e);
+							}
 							throw new IOException(GetLocalizedString("loaditems uncompression IOException").Replace("$$Key$$", key), e);
 						}
 					}
@@ -1309,7 +1430,10 @@ namespace Memcached.ClientLibrary
 						if(_primitiveAsString || asString) 
 						{
 							// pulling out string value
-							log.Info(GetLocalizedString("loaditems retrieve as string"));
+							if(log.IsInfoEnabled)
+							{
+								log.Info(GetLocalizedString("loaditems retrieve as string"));
+							}
 							o = Encoding.GetEncoding(_defaultEncoding).GetString(buf);
 						}
 						else 
@@ -1321,7 +1445,10 @@ namespace Memcached.ClientLibrary
 							}
 							catch(Exception e) 
 							{
-								log.Error(GetLocalizedString("loaditems deserialize error").Replace("$$Key$$", key), e);
+								if(log.IsErrorEnabled)
+								{
+									log.Error(GetLocalizedString("loaditems deserialize error").Replace("$$Key$$", key), e);
+								}
 								throw new IOException(GetLocalizedString("loaditems deserialize error").Replace("$$Key$$", key), e);
 							}
 						}
@@ -1333,11 +1460,17 @@ namespace Memcached.ClientLibrary
 						{
 							MemoryStream memStream = new MemoryStream(buf);
 							o = new BinaryFormatter().Deserialize(memStream);
-							log.Info(GetLocalizedString("loaditems deserializing").Replace("$$Class$$", o.GetType().Name));
+							if(log.IsInfoEnabled)
+							{
+								log.Info(GetLocalizedString("loaditems deserializing").Replace("$$Class$$", o.GetType().Name));
+							}
 						}
 						catch(SerializationException e) 
 						{
-							log.Error(GetLocalizedString("loaditems SerializationException").Replace("$$Key$$", key), e);
+							if(log.IsErrorEnabled)
+							{
+								log.Error(GetLocalizedString("loaditems SerializationException").Replace("$$Key$$", key), e);
+							}
 							throw new IOException(GetLocalizedString("loaditems SerializationException").Replace("$$Key$$", key), e);
 						}
 					}
@@ -1347,7 +1480,10 @@ namespace Memcached.ClientLibrary
 				}
 				else if(END == line) 
 				{
-					log.Debug(GetLocalizedString("loaditems finished"));
+					if(log.IsDebugEnabled)
+					{
+						log.Debug(GetLocalizedString("loaditems finished"));
+					}
 					break;
 				}
 			}
@@ -1380,7 +1516,10 @@ namespace Memcached.ClientLibrary
 			// return false if unable to get SockIO obj
 			if(pool == null) 
 			{
-				log.Error(GetLocalizedString("unable to get socket pool"));
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("unable to get socket pool"));
+				}
 				return false;
 			}
 
@@ -1391,7 +1530,10 @@ namespace Memcached.ClientLibrary
 			// if no servers, then return early
 			if(servers == null || servers.Count <= 0) 
 			{
-				log.Error(GetLocalizedString("flushall no servers"));
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("flushall no servers"));
+				}
 				return false;
 			}
 
@@ -1403,7 +1545,10 @@ namespace Memcached.ClientLibrary
 				SockIO sock = pool.GetConnection((string)servers[i]);
 				if(sock == null) 
 				{
-					log.Error(GetLocalizedString("unable to connect").Replace("$$Server$$", servers[i].ToString()));
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("unable to connect").Replace("$$Server$$", servers[i].ToString()));
+					}
 					success = false;
 					continue;
 				}
@@ -1424,8 +1569,10 @@ namespace Memcached.ClientLibrary
 				}
 				catch(IOException e) 
 				{
-					// exception thrown
-                    log.Error(GetLocalizedString("flushall IOException"), e);
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("flushall IOException"), e);
+					}
 
 					try 
 					{
@@ -1433,7 +1580,10 @@ namespace Memcached.ClientLibrary
 					}
 					catch(IOException ioe) 
 					{
-						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+						if(log.IsErrorEnabled)
+						{
+							log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()), ioe);
+						}
 					}
 
 					success = false;
@@ -1478,7 +1628,10 @@ namespace Memcached.ClientLibrary
 			// return false if unable to get SockIO obj
 			if(pool == null) 
 			{
-				log.Error(GetLocalizedString("unable to get socket pool"));
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("unable to get socket pool"));
+				}
 				return null;
 			}
 
@@ -1489,7 +1642,10 @@ namespace Memcached.ClientLibrary
 			// if no servers, then return early
 			if(servers == null || servers.Count <= 0) 
 			{
-				log.Error(GetLocalizedString("stats no servers"));
+				if(log.IsErrorEnabled)
+				{
+					log.Error(GetLocalizedString("stats no servers"));
+				}
 				return null;
 			}
 
@@ -1502,7 +1658,10 @@ namespace Memcached.ClientLibrary
 				SockIO sock = pool.GetConnection((string)servers[i]);
 				if(sock == null) 
 				{
-					log.Error(GetLocalizedString("unable to connect").Replace("$$Server$$", servers[i].ToString()));
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("unable to connect").Replace("$$Server$$", servers[i].ToString()));
+					}
 					continue;
 				}
 
@@ -1521,7 +1680,10 @@ namespace Memcached.ClientLibrary
 					while(true) 
 					{
 						string line = sock.ReadLine();
-						log.Debug(GetLocalizedString("stats line").Replace("$$Line$$", line));
+						if(log.IsDebugEnabled)
+						{
+							log.Debug(GetLocalizedString("stats line").Replace("$$Line$$", line));
+						}
 
 						if(line.StartsWith(STATS)) 
 						{
@@ -1529,7 +1691,10 @@ namespace Memcached.ClientLibrary
 							string key    = info[1];
 							string val  = info[2];
 
-							log.Debug(GetLocalizedString("stats success").Replace("$$Key$$", key).Replace("$$Value$$", val));
+							if(log.IsDebugEnabled)
+							{
+								log.Debug(GetLocalizedString("stats success").Replace("$$Key$$", key).Replace("$$Value$$", val));
+							}
 
 							stats[ key ] = val;
 
@@ -1537,7 +1702,10 @@ namespace Memcached.ClientLibrary
 						else if(END == line) 
 						{
 							// finish when we get end from server
-							log.Debug(GetLocalizedString("stats finished"));
+							if(log.IsDebugEnabled)
+							{
+								log.Debug(GetLocalizedString("stats finished"));
+							}
 							break;
 						}
 
@@ -1546,8 +1714,10 @@ namespace Memcached.ClientLibrary
 				}
 				catch(IOException e) 
 				{
-					// exception thrown
-                    log.Error(GetLocalizedString("stats IOException"), e);
+					if(log.IsErrorEnabled)
+					{
+						log.Error(GetLocalizedString("stats IOException"), e);
+					}
 
 					try 
 					{
@@ -1555,7 +1725,10 @@ namespace Memcached.ClientLibrary
 					}
 					catch(IOException) 
 					{
-						log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()));
+						if(log.IsErrorEnabled)
+						{
+							log.Error(GetLocalizedString("failed to close some socket").Replace("$$Socket$$", sock.ToString()));
+						}
 					}
 
 					sock = null;
