@@ -92,7 +92,7 @@
                 <Reference
                     Name = "log4net"
                     AssemblyName = "log4net"
-                    HintPath = "..\..\lib\log4net.dll"
+                    HintPath = "..\..\lib\1.1\log4net.dll"
                 />
             </References>
         </Build>
@@ -125,6 +125,11 @@
                 />
                 <File
                     RelPath = "NativeHandler.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "NetworkStreamIgnoreSeek.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
