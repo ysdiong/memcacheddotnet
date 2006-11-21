@@ -1,5 +1,6 @@
 (TG) Tim Gebhardt
 (MM) Maxim Mass
+(AR) Ayende Rahien
 
 02 Nov 2005 (TG)
    -Start of project
@@ -62,3 +63,13 @@
 		 "ERROR", then you will see a pretty significant performance
 		 benefit, CPU usage down significantly, and network usage
 		 up significantly.
+		 
+21 November 2006 (AR)
+   -Bugfix.	Workaround incorporated to work around the bug in
+   		BufferedStream.  BufferedStream calls Seek() on streams it
+   		wraps even if the underlying stream does not support Seek()
+   		(such as NetworkStream).
+  
+21 November 2006 (TG)
+   Upgrade.	Upgraded the log4net libraries to 1.2.10.  Split the /lib
+   		folder into a 1.1 and 2.0 directories.
