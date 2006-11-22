@@ -73,3 +73,12 @@
 21 November 2006 (TG)
    Upgrade.	Upgraded the log4net libraries to 1.2.10.  Split the /lib
    		folder into a 1.1 and 2.0 directories.
+   		
+21 November 2006 (TG)
+   Signed assembly
+   		I added a keyfile to the solution so that the client library
+   		can be strongly typed.  There may be some debate whether or
+   		not the key should be secret, but this is just easier this 
+   		way.  If people are worried about a modified assembly file
+   		I can start posting MD5 or SHA1 hashes of the binaries
+   		on the project page.
