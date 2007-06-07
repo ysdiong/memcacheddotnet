@@ -59,7 +59,6 @@ using System;
 //       documentation for more information on this.
 //
 [assembly: AssemblyDelaySign(false)]
-[assembly: AssemblyKeyFile(@"..\..\..\key.snk")]
 [assembly: AssemblyKeyName("")]
 
 [assembly: ComVisible(false)]

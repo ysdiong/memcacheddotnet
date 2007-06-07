@@ -385,22 +385,32 @@ namespace Memcached.ClientLibrary
         /// <summary>
         /// writes a byte array to the output stream
         /// </summary>
-        /// <param name="b">byte array to write</param>
+        /// <param name="bytes">byte array to write</param>
         public void Write(byte[] bytes)
         {
-            if (_socket == null || !_socket.Connected)
-            {
+			Write(bytes, 0, bytes.Length);
+        }
+
+		/// <summary>
+		/// writes a byte array to the output stream
+		/// </summary>
+		/// <param name="bytes">byte array to write</param>
+		/// <param name="offset">offset to begin writing from</param>
+		/// <param name="count">count of bytes to write</param>
+		public void Write(byte[] bytes, int offset, int count)
+		{
+			if (_socket == null || !_socket.Connected)
+			{
 				if(Log.IsErrorEnabled)
 				{
 					Log.Error(GetLocalizedString("write closed socket"));
 				}
-                throw new IOException(GetLocalizedString("write closed socket"));
-            }
-            if (bytes != null)
-                _networkStream.Write(bytes, 0, bytes.Length);
-        }
-
-        /// <summary>
+				throw new IOException(GetLocalizedString("write closed socket"));
+			}
+			if (bytes != null)
+				_networkStream.Write(bytes, offset, count);
+		}
+		/// <summary>
         /// returns the string representation of this socket 
         /// </summary>
         /// <returns></returns>
