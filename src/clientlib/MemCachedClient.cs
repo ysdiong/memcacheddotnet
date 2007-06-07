@@ -621,6 +621,7 @@ namespace Memcached.ClientLibrary
 		
 			// byte array to hold data
 			byte[] val;
+			int length = 0;
 
 			// useful for sharing data between .NET and non-.NET
             // and also for storing ints for the increment method
@@ -637,6 +638,7 @@ namespace Memcached.ClientLibrary
                         try
                         {
                             val = UTF8Encoding.UTF8.GetBytes(obj.ToString());
+							length = val.Length;
                         }
                         catch(ArgumentException ex)
                         {
@@ -652,6 +654,7 @@ namespace Memcached.ClientLibrary
                     else
                     {
                         val = new byte[0];
+						length = 0;
                     }
 				}
 				else 
@@ -664,6 +667,7 @@ namespace Memcached.ClientLibrary
 					try 
 					{
 						val = NativeHandler.Encode(obj);
+						length = val.Length;
 					}
 					catch(ArgumentException e) 
 					{
@@ -693,6 +697,7 @@ namespace Memcached.ClientLibrary
                         MemoryStream memStream = new MemoryStream();
                         new BinaryFormatter().Serialize(memStream, obj);
                         val = memStream.GetBuffer();
+						length = (int) memStream.Length;
                         flags |= F_SERIALIZED;
                     }
                     catch(IOException e)
@@ -713,33 +718,35 @@ namespace Memcached.ClientLibrary
                 else
                 {
                     val = new byte[0];
+					length = 0;
                 }
 			}
 		
 			// now try to compress if we want to
 			// and if the length is over the threshold 
-			if(_compressEnable && val.Length > _compressThreshold) 
+			if(_compressEnable && length > _compressThreshold) 
 			{
 				if(log.IsInfoEnabled)
 				{
 					log.Info(GetLocalizedString("set trying to compress data"));
-					log.Info(GetLocalizedString("set size prior").Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())));
+					log.Info(GetLocalizedString("set size prior").Replace("$$Size$$", length.ToString(new NumberFormatInfo())));
 				}
 
 				try 
 				{
 					MemoryStream memoryStream = new MemoryStream();
 					GZipOutputStream gos = new GZipOutputStream(memoryStream);
-					gos.Write(val, 0, val.Length);
+					gos.Write(val, 0, length);
 					gos.Finish();
 				
 					// store it and set compression flag
 					val = memoryStream.GetBuffer();
+					length = (int)memoryStream.Length;
 					flags |= F_COMPRESSED;
 
 					if(log.IsInfoEnabled)
 					{
-						log.Info(GetLocalizedString("set compression success").Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())));
+						log.Info(GetLocalizedString("set compression success").Replace("$$Size$$", length.ToString(new NumberFormatInfo())));
 					}
 				}
 				catch(IOException e) 
@@ -755,9 +762,9 @@ namespace Memcached.ClientLibrary
 			try 
 			{
 				string cmd = cmdname + " " + key + " " + flags + " "
-					+ GetExpirationTime(expiry) + " " + val.Length + "\r\n";
+					+ GetExpirationTime(expiry) + " " + length + "\r\n";
 				sock.Write(UTF8Encoding.UTF8.GetBytes(cmd));
-				sock.Write(val);
+				sock.Write(val,0,length);
 				sock.Write(UTF8Encoding.UTF8.GetBytes("\r\n"));
 				sock.Flush();
 
@@ -789,7 +796,7 @@ namespace Memcached.ClientLibrary
 				{
 					if(log.IsErrorEnabled)
 					{
-						log.Error(GetLocalizedString("set error").Replace("$$Key$$", key).Replace("$$Size$$", val.Length.ToString(new NumberFormatInfo())).Replace("$$Line$$", line));
+						log.Error(GetLocalizedString("set error").Replace("$$Key$$", key).Replace("$$Size$$", length.ToString(new NumberFormatInfo())).Replace("$$Line$$", line));
 					}
 				}
 			}
