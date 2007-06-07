@@ -82,3 +82,10 @@
    		way.  If people are worried about a modified assembly file
    		I can start posting MD5 or SHA1 hashes of the binaries
    		on the project page.
+
+7 June 2007 (TG)
+   -Bugfix.	Applied a patch from a contributer (thanks Dave Peckham!) that 
+                fixes a bug where we don't get the proper size of the buffer.
+                In many cases the code would still work fine, but you may 
+                have experienced periodic errors when working with very large
+                objects, or seeing wasted space on your memcached servers.
